@@ -1,0 +1,25 @@
+{
+  "openAPI": {
+    "info": {
+      "version": "1.0",
+      "title": "smart-news-aggregator-api",
+      "description": "Swagger API: <b>Smart News Aggregator</b>",
+      "termsOfService": "http://localhost:8080/",
+      "contact": {
+        "email": "a.koumgangtegantc@studenti.unipi.it",
+        "name": "Adrien Koumgang Tegantchouang",
+        "url": "http://localhost:8080/"
+      },
+      "license": {
+        "name": "localhost license",
+        "url": "http://localhost:8080/"
+      }
+    },
+    "servers": [
+      {
+        "url": "http://localhost:8080/",
+        "description": "Development server"
+      }
+    ]
+  }
+}
