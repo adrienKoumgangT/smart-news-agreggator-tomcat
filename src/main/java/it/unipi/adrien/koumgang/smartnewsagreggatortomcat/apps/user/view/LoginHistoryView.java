@@ -1,7 +1,10 @@
-package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view;
+package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view;
 
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.LoginHistory;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.LoginHistory;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.LoginHistorySimpleView;
+
+import java.util.Date;
 
 public class LoginHistoryView extends LoginHistorySimpleView {
 
@@ -11,6 +14,12 @@ public class LoginHistoryView extends LoginHistorySimpleView {
 
     public LoginHistoryView() {
         super();
+    }
+
+    public LoginHistoryView(Date loginTime, String status, String ipAddress, String userAgent) {
+        super(loginTime, status);
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
     }
 
     public LoginHistoryView(LoginHistory loginHistory) {

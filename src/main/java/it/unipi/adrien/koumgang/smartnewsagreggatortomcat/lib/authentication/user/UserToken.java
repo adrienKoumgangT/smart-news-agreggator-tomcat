@@ -1,6 +1,8 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user;
 
 import com.google.gson.GsonBuilder;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +19,16 @@ public class UserToken {
 
 
     public UserToken() {}
+
+    public UserToken(User user) {
+        this.idUser = new StringIdConverter().fromObjectId(user.getUserId());
+
+        this.username   = user.getUsername();
+        this.firstname  = user.getFirstName();
+        this.lastname   = user.getLastName();
+        this.isAdmin    = user.getAdmin();
+        this.status     = user.getStatus();
+    }
 
     public UserToken(
             String idUser,

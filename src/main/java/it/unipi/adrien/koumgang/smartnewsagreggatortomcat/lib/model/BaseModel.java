@@ -1,30 +1,30 @@
-package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core;
+package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoCreatedAt;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoUpdatedAt;
 
 import java.util.Date;
 
-public class MongoBaseModel {
+public class BaseModel {
 
 
-    @MongoField("created_by")
+    @ModelField("created_by")
     private String createdBy;
 
-    @MongoField("created_at")
+    @ModelField("created_at")
     @MongoCreatedAt
     private Date createdAt;
 
-    @MongoField("updated_by")
+    @ModelField("updated_by")
     private String updatedBy;
 
-    @MongoField("updated_at")
+    @ModelField("updated_at")
     @MongoUpdatedAt
     private Date updatedAt;
 
 
-    public MongoBaseModel() {}
+    public BaseModel() {}
 
 
     public String getCreatedBy() {

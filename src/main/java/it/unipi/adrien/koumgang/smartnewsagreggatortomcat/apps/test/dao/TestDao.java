@@ -10,7 +10,8 @@ public interface TestDao {
 
     Optional<Test> findById(ObjectId id);
     List<Test> findAll();
-    Test save(Test test);
+    List<Test> findAll(int page, int pageSize);
+    ObjectId save(Test test);
     boolean update(Test test);
     boolean delete(ObjectId id);
     long count();

@@ -1,15 +1,19 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.model;
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoCollectionName;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoEmbedded;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoId;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoBaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.*;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.BaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.RequestData;
 import org.bson.types.ObjectId;
 
+import java.util.List;
+import java.util.Map;
+
 @MongoCollectionName("auth-event-log")
-public class AuthEventLog extends MongoBaseModel {
+@MongoIndex(fields = {"event:1", "created_at:-1"})
+@MongoIndex(fields = {"is_success:1", "created_at:-1"})
+@MongoIndex(fields = {"event:1", "is_success:1", "created_at:-1"})
+public class AuthEventLog extends BaseModel {
 
     @MongoId
     private ObjectId authEventLogId;
@@ -17,16 +21,31 @@ public class AuthEventLog extends MongoBaseModel {
     @MongoEmbedded("request_data")
     private RequestData requestData;
 
-    @MongoField("event")
+    @ModelField("event")
     private String event;
 
-    @MongoField("is_success")
+    @ModelField("is_success")
     private Boolean isSuccess;
 
-    @MongoField("message")
+    @ModelField("message")
     private String message;
 
+    @ModelField("token")
+    private String token;
+
+    @ModelField("log_ip")
+    private String logIp;
+
+    @ModelField("server_data")
+    private Map<String, List<String>> serverData;
+
     public AuthEventLog() {}
+
+    public AuthEventLog(String event, Boolean isSuccess, String message) {
+        this.event = event;
+        this.isSuccess = isSuccess;
+        this.message = message;
+    }
 
     public ObjectId getAuthEventLogId() {
         return authEventLogId;
@@ -66,5 +85,29 @@ public class AuthEventLog extends MongoBaseModel {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getLogIp() {
+        return logIp;
+    }
+
+    public void setLogIp(String logIp) {
+        this.logIp = logIp;
+    }
+
+    public Map<String, List<String>> getServerData() {
+        return serverData;
+    }
+
+    public void setServerData(Map<String, List<String>> serverData) {
+        this.serverData = serverData;
     }
 }

@@ -1,12 +1,16 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model;
 
 
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view.RegisterView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.service.UserStatus;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserMeView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.password.PasswordChecker;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.password.PasswordHasher;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.*;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoBaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.BaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.Address;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.LoginHistory;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -14,41 +18,40 @@ import java.util.Date;
 import java.util.List;
 
 @MongoCollectionName("users")
-public class User extends MongoBaseModel {
+public class User extends BaseModel {
 
     @MongoId
     private ObjectId userId;
 
-    @MongoField("firstname")
+    @ModelField("firstname")
     private String firstName;
 
-    @MongoField("lastname")
+    @ModelField("lastname")
     private String lastName;
 
-    @MongoField("username")
+    @ModelField("username")
     // @MongoIndex(unique = true)
     private String username;
 
-    @MongoField("email")
-    // @MongoIndex(unique = true)
-    private String email;
+    @MongoEmbedded("email")
+    private UserEmail email;
 
     @MongoEmbedded("password")
     private UserPassword password;
 
-    @MongoField("is_admin")
+    @ModelField("is_admin")
     private Boolean isAdmin;
 
-    @MongoField("status")
+    @ModelField("status")
     private String status;
 
-    @MongoField("image")
+    @ModelField("image")
     private String image;
 
-    @MongoField("wall_image")
+    @ModelField("wall_image")
     private String wallImage;
 
-    @MongoField("last_login")
+    @ModelField("last_login")
     @MongoDateTime(utc = true)
     private Date lastLoginAt;
 
@@ -60,6 +63,31 @@ public class User extends MongoBaseModel {
 
 
     public User() {}
+
+    public User(UserMeView user) {
+        this.username   = user.getUsername();
+        this.firstName  = user.getFirstName();
+        this.lastName   = user.getLastName();
+        this.email      = new UserEmail(user.getEmail());
+
+        if(user.getAddresses() != null) {
+            this.addresses = user.getAddresses().stream().map(Address::new).toList();
+        } else this.addresses = new ArrayList<>();
+
+        this.loginHistory = new ArrayList<>();
+    }
+
+    public void update(UserMeView user) {
+        this.firstName  = user.getFirstName();
+        this.lastName   = user.getLastName();
+    }
+
+    public void update(UserView user) {
+        this.firstName  = user.getFirstName();
+        this.lastName   = user.getLastName();
+        this.isAdmin    = user.getAdmin();
+        this.status     = user.getStatus();
+    }
 
     public ObjectId getUserId() {
         return userId;
@@ -93,11 +121,11 @@ public class User extends MongoBaseModel {
         this.username = username;
     }
 
-    public String getEmail() {
+    public UserEmail getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(UserEmail email) {
         this.email = email;
     }
 
@@ -119,6 +147,22 @@ public class User extends MongoBaseModel {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean canLogin() {
+        if(status == null) return false;
+
+        UserStatus userStatus = UserStatus.getUserStatus(status);
+
+        if(userStatus == null) return false;
+
+        return switch (userStatus) {
+            case UserStatus.ACTIVE,
+                 UserStatus.PENDING,
+                 UserStatus.VERIFIED,
+                 UserStatus.GUEST -> true;
+            default -> false;
+        };
     }
 
     public String getImage() {
@@ -181,23 +225,4 @@ public class User extends MongoBaseModel {
         return matches;
     }
 
-    public void recordLogin() {
-        this.lastLoginAt = new Date();
-
-        // Add to login history
-        if (this.loginHistory == null) {
-            this.loginHistory = new ArrayList<>();
-        }
-        this.loginHistory.add(new LoginHistory(this.lastLoginAt, "success"));
-    }
-
-    public void recordFailedLogin() {
-        this.lastLoginAt = new Date();
-
-        // Add to login history
-        if (this.loginHistory == null) {
-            this.loginHistory = new ArrayList<>();
-        }
-        this.loginHistory.add(new LoginHistory(this.lastLoginAt, "failed"));
-    }
 }

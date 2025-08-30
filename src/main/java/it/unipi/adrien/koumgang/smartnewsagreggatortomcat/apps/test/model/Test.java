@@ -3,8 +3,9 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view.TestView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.*;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoBaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.BaseModel;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -14,19 +15,19 @@ import java.util.List;
 @MongoIndex(fields = {"is_active:1", "created_at:-1"})
 @MongoIndex(fields = {"name:1"}, unique = true)   // unique name
 @MongoIndex(fields = {"description:1"})           // another single index
-public class Test extends MongoBaseModel {
+public class Test extends BaseModel {
 
     @MongoId
     private ObjectId testId;
 
-    @MongoField("name")
+    @ModelField("name")
     @MongoIndex(unique = true)
     private String name;
 
-    @MongoField("description")
+    @ModelField("description")
     private String description;
 
-    @MongoField("is_active")
+    @ModelField("is_active")
     private Boolean isActive;
 
     @MongoEmbedded("embed")

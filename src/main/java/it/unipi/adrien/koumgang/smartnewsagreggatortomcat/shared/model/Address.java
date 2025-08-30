@@ -1,36 +1,45 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model;
 
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.AddressView;
 
 public class Address {
 
-    @MongoField("street")
+    @ModelField("street")
     private String street;
 
-    @MongoField("city")
+    @ModelField("city")
     private String city;
 
-    @MongoField("state")
+    @ModelField("state")
     private String state;
 
-    @MongoField("zip_code")
+    @ModelField("zip_code")
     private String zipCode;
 
-    @MongoField("country")
+    @ModelField("country")
     private String country;
 
-    @MongoField("is_primary")
+    @ModelField("is_primary")
     private Boolean primary;
 
     public Address() {}
 
     public Address(String street, String city, String state, String zipCode, String country) {
-        this.street = street;
-        this.city = city;
-        this.state = state;
-        this.zipCode = zipCode;
-        this.country = country;
+        this.street     = street;
+        this.city       = city;
+        this.state      = state;
+        this.zipCode    = zipCode;
+        this.country    = country;
+    }
+
+    public Address(AddressView addressView) {
+        this.street     = addressView.getStreet();
+        this.city       = addressView.getCity();
+        this.state      = addressView.getState();
+        this.zipCode    = addressView.getZipCode();
+        this.country    = addressView.getCountry();
     }
 
     // Getters and Setters

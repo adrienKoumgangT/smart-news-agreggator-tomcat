@@ -1,12 +1,18 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.service;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.dao.UserDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserPassword;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.repository.UserRepository;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.LoginHistoryView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserMeView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.password.PasswordHasher;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.LoginHistory;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.log.MineLog;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
@@ -15,56 +21,224 @@ import java.util.Optional;
 
 public class UserService {
 
+    public static UserService getInstance() {
+        return new UserService(UserRepository.getInstance());
+    }
+
+
+    private static final Gson gson = new GsonBuilder().serializeNulls().create();
+
+
     private final UserDao userDao;
 
     public UserService(UserDao userDao) {
         this.userDao = userDao;
     }
 
-    public Optional<User> getUserById(String id) {
+    public UserView getUserById(UserToken userToken, String id) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
-            return Optional.empty();
+            return null;
         }
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [GET] id: " + id);
+
         try {
             ObjectId objectId = new ObjectId(id);
-            return userDao.findById(objectId);
+            Optional<User> optUser = userDao.findById(objectId);
+
+            if(optUser.isEmpty()) {
+                timePrinter.missing("User not found");
+                return null;
+            }
+
+            UserView userView = new UserView(optUser.get());
+
+            timePrinter.log();
+
+            return userView;
         } catch (IllegalArgumentException e) {
-            return Optional.empty();
+            timePrinter.error(e.getMessage());
+            return null;
         }
     }
 
-    public boolean updateUser(String id, User userDetails) {
+    public List<UserView> listUsers(UserToken userToken) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [LIST] ");
+
+        List<User> users = userDao.findAll();
+
+        List<UserView> userViews = users.stream().map(UserView::new).toList();
+
+        timePrinter.log();
+
+        return userViews;
+    }
+
+    public List<UserView> listUsers(UserToken userToken, int page, int pageSize) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [LIST] page: " + page + ", size: " + pageSize);
+
+        List<User> users = userDao.findAll(page, pageSize);
+
+        List<UserView> userViews = users.stream().map(UserView::new).toList();
+
+        timePrinter.log();
+
+        return userViews;
+    }
+
+    public long count(UserToken userToken) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [COUNT] ");
+
+        long count = userDao.count();
+
+        timePrinter.log();
+
+        return count;
+    }
+
+    public Optional<User> getUserByUsername(String username) {
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [GET] username: " + username);
+
+        try {
+            List<User> users = userDao.findByUsername(username);
+
+            if(!users.isEmpty()) {
+                timePrinter.log();
+                return Optional.ofNullable(users.getFirst());
+            }
+        } catch (IllegalArgumentException e) {
+            timePrinter.error(e.getMessage());
+            return Optional.empty();
+        }
+
+        timePrinter.missing("User not found");
+
+        return Optional.empty();
+    }
+
+    public UserView saveUser(User user) {
+
+        UserView userViewParam = new UserView(user);
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [SAVE] user: " + gson.toJson(userViewParam));
+
+        try {
+            Optional<User> optUser = getUserByUsername(user.getUsername());
+            if(optUser.isPresent()) {
+                timePrinter.error("User with username" + user.getUsername() + " already exists");
+                return null;
+            }
+
+            ObjectId userId = userDao.save(user);
+
+            if(userId == null) {
+                timePrinter.error("Error saving user");
+                return null;
+            }
+
+            Optional<User> optSavedUser = userDao.findById(userId);
+            if(optSavedUser.isEmpty()) {
+                timePrinter.error("Error saving user");
+                return null;
+            }
+
+            UserView userView = new UserView(optSavedUser.get());
+
+            timePrinter.log();
+
+            return userView;
+        } catch (IllegalArgumentException e) {
+            timePrinter.error(e.getMessage());
+        }
+
+        return null;
+    }
+
+    public boolean updateUser(UserToken userToken, String id, UserMeView userDetails) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
             return false;
         }
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [UPDATE] user: " + gson.toJson(userDetails));
+
         try {
             ObjectId objectId = new ObjectId(id);
             Optional<User> existingUser = userDao.findById(objectId);
 
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
-                // TODO: Update fields...
-                return userDao.update(user);
+                user.update(userDetails);
+                user.setUpdatedBy(userToken.getIdUser());
+                boolean updated =  userDao.update(user);
+
+                timePrinter.log();
+
+                return updated;
             }
-            return false;
+
+            timePrinter.missing("User not found");
         } catch (IllegalArgumentException e) {
-            return false;
+            timePrinter.error(e.getMessage());
         }
+
+        return false;
     }
 
-    public boolean deleteUser(String id) {
+    public boolean updateUser(UserToken userToken, String id, UserView userDetails) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
             return false;
         }
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [UPDATE] user: " + gson.toJson(userDetails));
+
         try {
             ObjectId objectId = new ObjectId(id);
-            return userDao.delete(objectId);
+            Optional<User> existingUser = userDao.findById(objectId);
+
+            if (existingUser.isPresent()) {
+                User user = existingUser.get();
+                user.update(userDetails);
+                user.setUpdatedBy(userToken.getIdUser());
+                boolean updated =  userDao.update(user);
+
+                timePrinter.log();
+
+                return updated;
+            }
+
+            timePrinter.missing("User not found");
         } catch (IllegalArgumentException e) {
-            return false;
+            timePrinter.error(e.getMessage());
         }
+
+        return false;
     }
 
-    public boolean changePassword(String userId, String currentPassword, String newPassword) {
+    public boolean deleteUser(UserToken userToken, String id) {
+        if (!MongoAnnotationProcessor.isValidObjectId(id)) {
+            return false;
+        }
+
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [DELETE] id: " + id);
+
+        try {
+            ObjectId objectId = new ObjectId(id);
+            boolean deleted = userDao.delete(objectId);
+
+            timePrinter.log();
+
+            return deleted;
+        } catch (IllegalArgumentException e) {
+            timePrinter.error(e.getMessage());
+        }
+
+        return false;
+    }
+
+    public boolean changePassword(UserToken userToken, String userId, String currentPassword, String newPassword) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [CHANGE PASSWORD] id: " + userId);
+
         try {
             ObjectId objectId = new ObjectId(userId);
             Optional<User> userOpt = userDao.findById(objectId);
@@ -74,44 +248,54 @@ public class UserService {
 
                 if (user.verifyPassword(currentPassword)) {
                     UserPassword newUserPassword = new UserPassword(PasswordHasher.hashPassword(newPassword));
-                    return ((UserRepository) userDao).updatePassword(userId, newUserPassword);
+                    return userDao.updatePassword(userId, newUserPassword);
                 }
+
+                timePrinter.error("Invalid current password");
             }
-            return false;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
+
+            timePrinter.missing("User not found");
+        } catch (IllegalArgumentException ignored) { }
+
+        return false;
     }
 
-    public boolean recordLogin(String userId, String ipAddress, String userAgent) {
+    public boolean recordLogin(UserToken userToken, String userId, String ipAddress, String userAgent) {
+        return recordLogin(userToken, userId, "success", ipAddress, userAgent);
+    }
+
+    public boolean recordLogin(UserToken userToken, String userId, String status, String ipAddress, String userAgent) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [RECORD LOGIN] id: " + userId + ", status:" + status);
+
         try {
             ObjectId objectId = new ObjectId(userId);
-            Optional<User> userOpt = userDao.findById(objectId);
+            LoginHistoryView loginHistoryView = new LoginHistoryView(
+                    new Date(),
+                    status,
+                    ipAddress,
+                    userAgent
+            );
 
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                user.recordLogin();
+            boolean updated =  ((UserRepository) userDao).addLoginHistory(userId, loginHistoryView);
 
-                LoginHistory loginHistory = new LoginHistory(
-                        new Date(),
-                        "success",
-                        ipAddress,
-                        userAgent
-                );
-
-                return ((UserRepository) userDao).addLoginHistory(userId, loginHistory);
+            if(updated) {
+                timePrinter.log();
+                return true;
             }
-            return false;
+
+            timePrinter.missing("Error during add login history");
         } catch (IllegalArgumentException e) {
-            return false;
+            timePrinter.error(e.getMessage());
         }
+
+        return false;
     }
 
-    public List<User> getUsersWithExpiredPasswords() {
+    public List<User> getUsersWithExpiredPasswords(UserToken userToken) {
         return ((UserRepository) userDao).findUsersWithExpiredPasswords();
     }
 
-    public List<User> getUsersWithSuspiciousActivity() {
+    public List<User> getUsersWithSuspiciousActivity(UserToken userToken) {
         return ((UserRepository) userDao).findUsersWithFailedLoginAttempts(3);
     }
 }

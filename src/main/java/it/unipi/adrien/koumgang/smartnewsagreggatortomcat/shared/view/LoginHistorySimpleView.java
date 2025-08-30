@@ -1,6 +1,6 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view;
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.LoginHistory;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.LoginHistory;
 
 import java.util.Date;
 
@@ -11,6 +11,11 @@ public class LoginHistorySimpleView {
     private String status;
 
     public LoginHistorySimpleView() {}
+
+    public LoginHistorySimpleView(Date loginTime, String status) {
+        this.loginTime = loginTime;
+        this.status = status;
+    }
 
     public LoginHistorySimpleView(LoginHistory loginHistory) {
         this.loginTime = loginHistory.getLoginTime();

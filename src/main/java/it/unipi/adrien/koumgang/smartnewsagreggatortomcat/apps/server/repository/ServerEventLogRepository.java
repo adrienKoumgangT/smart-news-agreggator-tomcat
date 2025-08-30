@@ -1,11 +1,12 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.repository;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.dao.ServerEventLogDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.model.ServerEventLog;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.utils.DateTimeInitializer;
@@ -44,9 +45,30 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
         }
     }
 
+    private Bson getFilterByEvent(String event) {
+        return Filters.eq(
+                MongoAnnotationProcessor.getFieldName(getField("event")),
+                event
+        );
+    }
+
+    private Bson getFilterByName(String name) {
+        return Filters.eq(
+                MongoAnnotationProcessor.getFieldName(getField("name")),
+                name
+        );
+    }
+
+    private Bson getFilterByEventAndName(String event, String name) {
+        return Filters.and(
+                Filters.eq(MongoAnnotationProcessor.getFieldName(getField("event")), event),
+                Filters.eq(MongoAnnotationProcessor.getFieldName(getField("name")), name)
+        );
+    }
+
     /**
-     * @param id id the server event log to return
-     * @return server error log instance if found
+     * @param id the id server event log to return
+     * @return server event log instance if found
      */
     @Override
     public Optional<ServerEventLog> findById(ObjectId id) {
@@ -55,7 +77,15 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
     }
 
     /**
-     * @return all server error log
+     * @return the number of event log
+     */
+    @Override
+    public long count() {
+        return serverEventLogCollection.countDocuments();
+    }
+
+    /**
+     * @return all server event log
      */
     @Override
     public List<ServerEventLog> findAll() {
@@ -68,88 +98,55 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
 
     /**
      * @param event type of event log
-     * @return event error log for this specify event
-     */
-    @Override
-    public List<ServerEventLog> findByEvent(String event) {
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        Bson filter = Filters.eq(
-                MongoAnnotationProcessor.getFieldName(getField("event")),
-                event
-        );
-
-        for (Document document : serverEventLogCollection.find(filter)) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
-    }
-
-    /**
-     * @param name type of event log
-     * @return event error log for this specify event
-     */
-    @Override
-    public List<ServerEventLog> findByName(String name) {
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        Bson filter = Filters.eq(
-                MongoAnnotationProcessor.getFieldName(getField("name")),
-                name
-        );
-
-        for (Document document : serverEventLogCollection.find(filter)) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
-    }
-
-    /**
-     * @param serverEventLog the server event log
-     * @return new server event log saving
-     */
-    @Override
-    public ServerEventLog save(ServerEventLog serverEventLog) {
-        // Initialize timestamps before saving
-        DateTimeInitializer.initializeTimestamps(serverEventLog);
-
-        Document document = MongoAnnotationProcessor.toDocument(serverEventLog);
-        serverEventLogCollection.insertOne(document);
-
-        // Set the generated ID back to the user object
-        ObjectId generatedId = document.getObjectId("_id");
-        serverEventLog.setServerEventLogId(generatedId);
-
-        return serverEventLog;
-    }
-
-    /**
-     * @param id the server event log to delete
-     * @return true if success, false otherwise
-     */
-    @Override
-    public boolean delete(ObjectId id) {
-        DeleteResult result = serverEventLogCollection.deleteOne(Filters.eq("_id", id));
-        return result.getDeletedCount() > 0;
-    }
-
-    /**
-     * @return the number of event log
-     */
-    @Override
-    public long count() {
-        return serverEventLogCollection.countDocuments();
-    }
-
-    /**
-     * @param event type of event log
      * @return the number of event log for this specify event
      */
     @Override
     public long countByEvent(String event) {
-        Document filter = new Document(
-                MongoAnnotationProcessor.getFieldName(getField("event")),
-                event
-        );
-        return serverEventLogCollection.countDocuments(filter);
+        return serverEventLogCollection.countDocuments(getFilterByEvent(event));
+    }
+
+    /**
+     * @param event type of event log
+     * @return server event log for this specify event
+     */
+    @Override
+    public List<ServerEventLog> findByEvent(String event) {
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByEvent(event))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
+    /**
+     * @param event event of server event log
+     * @param page number of page to return
+     * @param pageSize number of element to return
+     * @return server event log for with specify event
+     */
+    @Override
+    public List<ServerEventLog> findByEvent(String event, int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByEvent(event))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
+                .skip(skip)
+                .limit(pageSize);
+
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
     }
 
     /**
@@ -158,11 +155,137 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
      */
     @Override
     public long countByName(String name) {
-        Document filter = new Document(
+        return serverEventLogCollection.countDocuments(getFilterByName(name));
+    }
+
+    /**
+     * @param name name of event log
+     * @return server event log for with specify name
+     */
+    @Override
+    public List<ServerEventLog> findByName(String name) {
+        Bson filter = Filters.eq(
                 MongoAnnotationProcessor.getFieldName(getField("name")),
                 name
         );
-        return serverEventLogCollection.countDocuments(filter);
+
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByName(name))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
+    /**
+     * @param name name of event log
+     * @param page number of page to return
+     * @param pageSize number of element to return
+     * @return server event log for with specify name
+     */
+    @Override
+    public List<ServerEventLog> findByName(String name, int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByName(name))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
+                .skip(skip)
+                .limit(pageSize);
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
+    /**
+     * @param event type of event log
+     * @param name type of event log
+     * @return the number of event log for this specify name
+     */
+    @Override
+    public long countByEventAndName(String event, String name) {
+        return serverEventLogCollection.countDocuments(getFilterByEventAndName(event, name));
+    }
+
+    /**
+     * @param event type of event log
+     * @param name name of event log
+     * @return server event log for this specify event and name
+     */
+    @Override
+    public List<ServerEventLog> findByEventAndName(String event, String name) {
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByEventAndName(event, name))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
+    /**
+     * @param event type of event log
+     * @param name name of event log
+     * @param page number of page to return
+     * @param pageSize number of element to return
+     * @return server event log for this specify event and name
+     */
+    @Override
+    public List<ServerEventLog> findByEventAndName(String event, String name, int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find(getFilterByEventAndName(event, name))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
+                .skip(skip)
+                .limit(pageSize);
+
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
+    /**
+     * @param serverEventLog the server event log to save
+     * @return new server event log id saving
+     */
+    @Override
+    public ObjectId save(ServerEventLog serverEventLog) {
+        // Initialize timestamps before saving
+        DateTimeInitializer.initializeTimestamps(serverEventLog);
+
+        Document document = MongoAnnotationProcessor.toDocument(serverEventLog);
+        InsertOneResult result = serverEventLogCollection.insertOne(document);
+
+        if(result.getInsertedId() == null) return null;
+
+        return result.getInsertedId().asObjectId().getValue();
+    }
+
+    /**
+     * @param id the server event log to delete
+     * @return true if success else false
+     */
+    @Override
+    public boolean delete(ObjectId id) {
+        DeleteResult result = serverEventLogCollection.deleteOne(Filters.eq("_id", id));
+        return result.getDeletedCount() > 0;
     }
 
 }

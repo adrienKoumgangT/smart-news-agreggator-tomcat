@@ -3,19 +3,20 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.repository;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.dao.UserDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserPassword;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.LoginHistoryView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.utils.DateTimeInitializer;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.MongoInstance;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.repository.BaseRepository;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.Address;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.LoginHistory;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.LoginHistory;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -27,6 +28,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class UserRepository extends BaseRepository implements UserDao {
+
+    public static UserRepository getInstance() {
+        return new UserRepository(MongoInstance.getInstance().mongoDatabase());
+    }
+
 
     private final MongoCollection<Document> userCollection;
     private final Class<User> userClass = User.class;
@@ -58,6 +64,25 @@ public class UserRepository extends BaseRepository implements UserDao {
             users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
         }
         return users;
+    }
+
+    @Override
+    public List<User> findAll(int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        List<User> users = new ArrayList<>();
+        for (Document document : userCollection.find().skip(skip).limit(pageSize)) {
+            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
+        }
+        return users;
+    }
+
+    @Override
+    public long count() {
+        return userCollection.countDocuments();
     }
 
     @Override
@@ -103,18 +128,16 @@ public class UserRepository extends BaseRepository implements UserDao {
     }
 
     @Override
-    public User save(User user) {
+    public ObjectId save(User user) {
         // Initialize timestamps before saving
         DateTimeInitializer.initializeTimestamps(user);
 
         Document document = MongoAnnotationProcessor.toDocument(user);
-        userCollection.insertOne(document);
+        InsertOneResult result = userCollection.insertOne(document);
 
-        // Set the generated ID back to the user object
-        ObjectId generatedId = document.getObjectId("_id");
-        user.setUserId(generatedId);
+        if(result.getInsertedId() == null) return null;
 
-        return user;
+        return result.getInsertedId().asObjectId().getValue();
     }
 
     @Override
@@ -182,11 +205,6 @@ public class UserRepository extends BaseRepository implements UserDao {
     }
 
     @Override
-    public long count() {
-        return userCollection.countDocuments();
-    }
-
-    @Override
     public boolean existsByUsername(String username) {
         return userCollection.countDocuments(Filters.eq("username", username)) > 0;
     }
@@ -198,6 +216,7 @@ public class UserRepository extends BaseRepository implements UserDao {
 
 
     // Methods for embedded document operations
+    @Override
     public boolean updatePassword(String userId, UserPassword newPassword) {
         try {
             ObjectId objectId = new ObjectId(userId);
@@ -217,9 +236,12 @@ public class UserRepository extends BaseRepository implements UserDao {
         }
     }
 
-    public boolean addLoginHistory(String userId, LoginHistory loginHistory) {
+    public boolean addLoginHistory(String userId, LoginHistoryView loginHistoryView) {
         try {
             ObjectId objectId = new ObjectId(userId);
+
+            LoginHistory loginHistory = new LoginHistory(loginHistoryView);
+
             Document historyDoc = MongoAnnotationProcessor.toDocument(loginHistory);
 
             UpdateResult result = userCollection.updateOne(

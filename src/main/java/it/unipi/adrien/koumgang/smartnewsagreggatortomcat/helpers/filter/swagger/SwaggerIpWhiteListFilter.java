@@ -21,7 +21,7 @@ public class SwaggerIpWhiteListFilter implements Filter {
         if(request instanceof HttpServletRequest httpRequest) {
             String method = httpRequest.getMethod();
             String uri = httpRequest.getRequestURI();
-            MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SWAGGER] " + method + " --- URI: " + uri);
+            MineLog.blue("[SWAGGER] " + method + " --- URI: " + uri);
 
             String remoteIp = request.getRemoteAddr();
             // System.out.println(remoteIp);

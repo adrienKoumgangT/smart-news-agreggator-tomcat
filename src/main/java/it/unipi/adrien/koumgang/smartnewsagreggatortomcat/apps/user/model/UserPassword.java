@@ -1,36 +1,37 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoDateTime;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
 
 import java.util.Date;
 
 public class UserPassword {
 
-    @MongoField("password")
+    @ModelField("password")
     private String passwordHash;
 
-    @MongoField("need_change")
+    @ModelField("need_change")
     private Boolean needChange;
 
-    @MongoField("changed_at")
+    @ModelField("changed_at")
     @MongoDateTime(utc = true)
     private Date changedAt;
 
-    @MongoField("expires_at")
+    @ModelField("expires_at")
     @MongoDateTime(utc = true)
     private Date expiresAt;
 
-    @MongoField("failed_attempts")
+    @ModelField("failed_attempts")
     private Integer failedAttempts;
 
-    @MongoField("last_failed_attempt")
+    @ModelField("last_failed_attempt")
     @MongoDateTime(utc = true)
     private Date lastFailedAttempt;
 
-    @MongoField("is_locked")
+    @ModelField("is_locked")
     private Boolean locked;
+
 
 
     // Constructors
@@ -44,7 +45,8 @@ public class UserPassword {
         this();
         this.passwordHash = passwordHash;
         this.changedAt = new Date();
-        this.expiresAt = MongoAnnotationProcessor.nowMinusDays(3); // 3 months expiration
+        this.needChange = false;
+        this.expiresAt = MongoAnnotationProcessor.nowPlusMonth(3); // 3 months expiration
     }
 
     public String getPasswordHash() {

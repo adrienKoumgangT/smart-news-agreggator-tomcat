@@ -1,9 +1,13 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view;
 
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view.RegisterView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserEmail;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserPassword;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
 
-public class UserExternView {
+public class UserExternView extends BaseView {
 
     private String userId;
 
@@ -27,6 +31,12 @@ public class UserExternView {
         this.username   = user.getUsername();
         this.image      = user.getImage();
         this.wallImage  = user.getWallImage();
+    }
+
+    public UserExternView(RegisterView registerView) {
+        this.username = registerView.getUsername();
+        this.firstName = registerView.getFirstName();
+        this.lastName = registerView.getLastName();
     }
 
 

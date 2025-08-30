@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.dao.TestDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model.Test;
@@ -61,18 +62,30 @@ public class TestRepository extends BaseRepository implements TestDao {
     }
 
     @Override
-    public Test save(Test test) {
+    public List<Test> findAll(int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        List<Test> tests = new ArrayList<>();
+        for (Document document : testCollection.find().skip(skip).limit(pageSize)) {
+            tests.add(MongoAnnotationProcessor.fromDocument(document, testClass));
+        }
+        return tests;
+    }
+
+    @Override
+    public ObjectId save(Test test) {
         // Initialize timestamps before saving
         DateTimeInitializer.initializeTimestamps(test);
 
         Document document = MongoAnnotationProcessor.toDocument(test);
-        testCollection.insertOne(document);
+        InsertOneResult result = testCollection.insertOne(document);
 
-        // Set the generated ID back to the user object
-        ObjectId generatedId = document.getObjectId("_id");
-        test.setTestId(generatedId);
+        if(result.getInsertedId() == null) return null;
 
-        return test;
+        return result.getInsertedId().asObjectId().getValue();
     }
 
     @Override

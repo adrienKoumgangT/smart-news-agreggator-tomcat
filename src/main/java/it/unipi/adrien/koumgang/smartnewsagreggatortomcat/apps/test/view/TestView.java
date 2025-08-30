@@ -1,15 +1,21 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view;
 
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model.Test;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
 import java.util.List;
 
-public class TestView {
+public class TestView extends BaseView {
 
+    @Schema(title = "Test ID", example = "68b28e50c8c86a733de632d8")
     private String testId;
 
+    @Required
+    @Schema(title = "Product name", example = "Test 1", requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
 
     private String description;

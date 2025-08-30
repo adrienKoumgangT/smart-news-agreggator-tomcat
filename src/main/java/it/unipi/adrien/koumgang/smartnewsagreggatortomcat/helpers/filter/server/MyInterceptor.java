@@ -5,17 +5,16 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.Provider;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.filter.server.ServerUtils.readAll;
-import static it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.filter.server.ServerUtils.shouldLogBody;
-
+/**
+ * Logs HTTP method, URI, and (for JSON/form requests) a copy of the body
+ * without consuming the underlying input stream, so JAX-RS can still read it.
+ */
 @Provider
 public class MyInterceptor implements ContainerRequestFilter, ContainerResponseFilter {
 
@@ -31,12 +30,13 @@ public class MyInterceptor implements ContainerRequestFilter, ContainerResponseF
         final String method = ctx.getMethod();
         final String path = ctx.getUriInfo() != null ? ctx.getUriInfo().getPath() : "";
 
-        if (!shouldLogBody(method, ctx.getMediaType())) {
+        if (ServerUtils.shouldSkipBodyLog(method, ctx.getMediaType())) {
+            MineLog.blue("[HTTP] " + method + " --- URI: /" + path);
             return; // don’t touch the stream
         }
 
         // Read the request entity stream fully
-        byte[] bodyBytes = readAll(ctx.getEntityStream());
+        byte[] bodyBytes = ServerUtils.readAll(ctx.getEntityStream());
         // store for later (ExceptionMapper, etc.)
         ctx.setProperty(ServerUtils.RAW_BODY_PROP, new String(bodyBytes, java.nio.charset.StandardCharsets.UTF_8));
         // restore for normal processing
@@ -51,7 +51,7 @@ public class MyInterceptor implements ContainerRequestFilter, ContainerResponseF
 
         // Print your log (replace with your logger)
         // System.out.printf("[HTTP] %s --- URI: /%s --- Body: %s%n", method, path, body);
-        new MineLog.TimePrinter("[HTTP] " + method + " --- URI: /" + path + " --- Body: " + body);
+        MineLog.blue("[HTTP] " + method + " --- URI: /" + path + " --- Body: " + body);
     }
 
 

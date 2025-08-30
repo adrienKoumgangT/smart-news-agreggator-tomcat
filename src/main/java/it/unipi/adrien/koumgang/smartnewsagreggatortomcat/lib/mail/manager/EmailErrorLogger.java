@@ -24,6 +24,7 @@ public class EmailErrorLogger {
                         error.getClass().getSimpleName(),
                         error.getMessage(),
                         null,
+                        null,
                         null
                 );
 

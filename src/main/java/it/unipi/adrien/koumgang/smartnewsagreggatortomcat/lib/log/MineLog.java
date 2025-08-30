@@ -158,6 +158,11 @@ public final class MineLog {
             print(color);
         }
 
+        public void missing() {
+            String color = ColorPrint.CYAN_BOLD.getCode();
+            print(color);
+        }
+
         public void error() {
             String color = ColorPrint.RED_BOLD.getCode();
             print(color);
@@ -168,7 +173,7 @@ public final class MineLog {
                 System.out.println(
                         color
                                 + Calendar.getInstance().getTime() + " "
-                                + message
+                                + this.message + " --> " + message
                                 + " millis: " + (Calendar.getInstance().getTimeInMillis() - this.current) + " "
                                 + ColorPrint.RESET.getCode()
                 );
@@ -186,6 +191,11 @@ public final class MineLog {
 
         public void warning(String message) {
             String color = ColorPrint.MAGENTA_BOLD.getCode();
+            print(color, message);
+        }
+
+        public void missing(String message) {
+            String color = ColorPrint.CYAN_BOLD.getCode();
             print(color, message);
         }
 
@@ -214,6 +224,10 @@ public final class MineLog {
 
     public static void error(String message) {
         formatPrint(ColorPrint.RED_BOLD.getCode(), message);
+    }
+
+    public static void blue(String message) {
+        formatPrint(ColorPrint.BLUE_BOLD.getCode(), message);
     }
 
 }

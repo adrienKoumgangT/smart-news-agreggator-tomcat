@@ -6,6 +6,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.dao.Server
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.model.ServerEventLog;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.repository.ServerEventLogRepository;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.view.ServerEventLogView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.log.MineLog;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.RequestData;
@@ -21,6 +22,7 @@ public class ServerEventLogService {
         return new ServerEventLogService(ServerEventLogRepository.getInstance());
     }
 
+
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
 
 
@@ -31,12 +33,14 @@ public class ServerEventLogService {
     }
 
 
-    public Optional<ServerEventLogView> getServerEventLog(String id) {
+    public Optional<ServerEventLogView> getServerEventLog(UserToken userToken, String id) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
             return Optional.empty();
         }
 
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [GET] id: " + id);
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [GET] id: " + id
+        );
 
         try {
             ObjectId objectId = new ObjectId(id);
@@ -47,7 +51,7 @@ public class ServerEventLogService {
             }
         } catch (IllegalArgumentException ignored) { }
 
-        timePrinter.error("Server event not found");
+        timePrinter.missing("Server event not found");
 
         return Optional.empty();
     }
@@ -57,7 +61,8 @@ public class ServerEventLogService {
             String name,
             String message,
             String curl,
-            RequestDataView requestDataView
+            RequestDataView requestDataView,
+            String metaUser
     ) {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
                 "[SERVICE] [SERVER EVENT LOG] [SAVE] test: event:" + event
@@ -72,11 +77,25 @@ public class ServerEventLogService {
         ServerEventLog serverEventLog = new ServerEventLog(event, name, message);
         serverEventLog.setCurl(curl);
         serverEventLog.setRequestData(requestData);
+        serverEventLog.setCreatedBy(metaUser);
+        serverEventLog.setUpdatedBy(metaUser);
 
         try {
-            ServerEventLog serverEventLogNew =  serverEventLogDao.save(serverEventLog);
+            ObjectId serverEventLogId =  serverEventLogDao.save(serverEventLog);
 
-            ServerEventLogView serverEventLogView = new ServerEventLogView(serverEventLogNew);
+            if(serverEventLogId == null) {
+                timePrinter.error("Error saving server event log");
+                return null;
+            }
+
+            Optional<ServerEventLog> optServerEventLog = serverEventLogDao.findById(serverEventLogId);
+
+            if(optServerEventLog.isEmpty()) {
+                timePrinter.error("Error saving server event log");
+                return null;
+            }
+
+            ServerEventLogView serverEventLogView = new ServerEventLogView(optServerEventLog.get());
 
             timePrinter.log();
 
@@ -88,12 +107,14 @@ public class ServerEventLogService {
         return null;
     }
 
-    public boolean deleteServerEventLog(String id) {
+    public boolean deleteServerEventLog(UserToken userToken, String id) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
             return false;
         }
 
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [DELETE] id: " + id);
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [DELETE] id: " + id
+        );
 
         try {
             ObjectId objectId = new ObjectId(id);
@@ -109,7 +130,7 @@ public class ServerEventLogService {
         return false;
     }
 
-    public List<ServerEventLogView> listServerEventLogs() {
+    public List<ServerEventLogView> listServerEventLogs(UserToken userToken) {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [LIST] ");
 
         List<ServerEventLog> serverEventLogs = serverEventLogDao.findAll();
@@ -121,7 +142,7 @@ public class ServerEventLogService {
         return serverEventLogViews;
     }
 
-    public long getNumberOfServerEventLogs() {
+    public long getNumberOfServerEventLogs(UserToken userToken) {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [COUNT] ");
 
         long count = serverEventLogDao.count();
@@ -131,8 +152,10 @@ public class ServerEventLogService {
         return count;
     }
 
-    public List<ServerEventLogView> listServerEventLogsByEvent(String event) {
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [LIST] event: " + event);
+    public List<ServerEventLogView> listServerEventLogsByEvent(UserToken userToken, String event) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [LIST] event: " + event
+        );
 
         List<ServerEventLog> serverEventLogs = serverEventLogDao.findByEvent(event);
 
@@ -143,8 +166,10 @@ public class ServerEventLogService {
         return serverEventLogViews;
     }
 
-    public long getNumberOfServerEventLogsByEvent(String event) {
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [COUNT] event: " + event);
+    public long getNumberOfServerEventLogsByEvent(UserToken userToken, String event) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [COUNT] event: " + event
+        );
 
         long count = serverEventLogDao.countByEvent(event);
 
@@ -153,8 +178,10 @@ public class ServerEventLogService {
         return count;
     }
 
-    public List<ServerEventLogView> listServerEventLogsByName(String name) {
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [LIST] name: " + name);
+    public List<ServerEventLogView> listServerEventLogsByName(UserToken userToken, String name) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [LIST] name: " + name
+        );
 
         List<ServerEventLog> serverEventLogs = serverEventLogDao.findByName(name);
 
@@ -165,8 +192,10 @@ public class ServerEventLogService {
         return serverEventLogViews;
     }
 
-    public long getNumberOfServerEventLogsByName(String name) {
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [COUNT] name: " + name);
+    public long getNumberOfServerEventLogsByName(UserToken userToken, String name) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [SERVER EVENT LOG] [COUNT] name: " + name
+        );
 
         long count = serverEventLogDao.countByName(name);
 

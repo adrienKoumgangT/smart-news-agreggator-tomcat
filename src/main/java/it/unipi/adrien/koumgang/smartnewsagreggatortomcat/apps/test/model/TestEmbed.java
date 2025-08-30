@@ -3,19 +3,19 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view.TestEmbedView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoDateTime;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 
 import java.util.Date;
 
 public class TestEmbed {
 
-    @MongoField("name")
+    @ModelField("name")
     private String name;
 
-    @MongoField("description")
+    @ModelField("description")
     private String description;
 
-    @MongoField("date")
+    @ModelField("date")
     @MongoDateTime(utc = true)
     private Date date;
 

@@ -3,15 +3,19 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.view;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.model.ServerEventLog;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
-public class ServerEventLogSimpleView {
+public class ServerEventLogSimpleView extends BaseView {
 
     private String serverEventLogId;
 
+    @Required
     private String event;
 
     private String curl;
 
+    @Required
     private String name;
 
     private String message;
@@ -19,7 +23,7 @@ public class ServerEventLogSimpleView {
     public ServerEventLogSimpleView() {}
 
     public ServerEventLogSimpleView(ServerEventLog serverEventLog) {
-        this.serverEventLogId = serverEventLog.getServerEventLogId() != null ? new StringIdConverter().fromObjectId(serverEventLog.getServerEventLogId()) : null;
+        this.serverEventLogId = StringIdConverter.getInstance().fromObjectId(serverEventLog.getServerEventLogId());
 
         this.event = serverEventLog.getEvent();
         this.curl = serverEventLog.getCurl();

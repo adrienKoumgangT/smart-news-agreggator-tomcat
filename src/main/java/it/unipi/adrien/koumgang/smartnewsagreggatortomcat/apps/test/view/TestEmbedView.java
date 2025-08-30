@@ -2,10 +2,11 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view;
 
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model.TestEmbed;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
 
 import java.util.Date;
 
-public class TestEmbedView {
+public class TestEmbedView extends BaseView {
 
     private String name;
 

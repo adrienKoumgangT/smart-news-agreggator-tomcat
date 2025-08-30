@@ -5,7 +5,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoCollectionName;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoIndex;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoIndexes;
 import org.bson.Document;
@@ -26,9 +26,9 @@ import java.util.*;
  *      private String name;
  * <p>
  * Notes:
- *  - For class-level fields, prefer storage names (the values you put in @MongoField),
+ *  - For class-level fields, prefer storage names (the values you put in @ModelField),
  *    e.g., "is_active", "created_at". You may also pass "javaFieldName" and the
- *    resolver will try to map it to @MongoField if present.
+ *    resolver will try to map it to @ModelField if present.
  *  - This utility is idempotent: creating an identical index again returns the existing name.
  */
 public final class MongoIndexCreator {
@@ -150,8 +150,8 @@ public final class MongoIndexCreator {
      *   - "field:-1"       -> descending
      *
      * field can be either:
-     *   - storage name (preferred, matches @MongoField value)
-     *   - java field name (we attempt to resolve to storage name via @MongoField on the class hierarchy)
+     *   - storage name (preferred, matches @ModelField value)
+     *   - java field name (we attempt to resolve to storage name via @ModelField on the class hierarchy)
      */
     private static Bson parseIndexSpec(String spec, Class<?> modelClass) {
         if (spec == null || spec.isBlank()) {
@@ -170,24 +170,24 @@ public final class MongoIndexCreator {
             }
         }
 
-        // Try to resolve java field name -> storage name via @MongoField; fallback to raw
+        // Try to resolve java field name -> storage name via @ModelField; fallback to raw
         String storageName = resolveStorageName(modelClass, rawName).orElse(rawName);
 
         return dir >= 0 ? Indexes.ascending(storageName) : Indexes.descending(storageName);
     }
 
     /**
-     * Try to find a field named 'javaFieldName' in the class hierarchy, and if it has @MongoField,
+     * Try to find a field named 'javaFieldName' in the class hierarchy, and if it has @ModelField,
      * return its value. Otherwise empty.
      */
     private static Optional<String> resolveStorageName(Class<?> modelClass, String javaFieldName) {
         for (Field f : getAllFields(modelClass)) {
             if (!f.getName().equals(javaFieldName)) continue;
-            MongoField mf = f.getAnnotation(MongoField.class);
+            ModelField mf = f.getAnnotation(ModelField.class);
             if (mf != null && mf.value() != null && !mf.value().isBlank()) {
                 return Optional.of(mf.value());
             }
-            return Optional.of(javaFieldName); // present, but no @MongoField -> use same name
+            return Optional.of(javaFieldName); // present, but no @ModelField -> use same name
         }
         return Optional.empty();
     }
@@ -201,7 +201,7 @@ public final class MongoIndexCreator {
     }
 
     private static String storageNameOf(Field f) {
-        MongoField mf = f.getAnnotation(MongoField.class);
+        ModelField mf = f.getAnnotation(ModelField.class);
         if (mf != null && mf.value() != null && !mf.value().isBlank()) {
             return mf.value();
         }

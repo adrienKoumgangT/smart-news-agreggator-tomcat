@@ -28,9 +28,6 @@ import java.nio.charset.StandardCharsets;
 @WebFilter("/*")
 public class MyFilter implements Filter {
 
-    // Avoid printing excessively large request bodies in logs
-    private static final int MAX_LOG_BODY_BYTES = 10_000;
-
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         System.out.println("Init Server");
@@ -39,60 +36,12 @@ public class MyFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-
-        if(request instanceof HttpServletRequest httpRequest) {
-            String method = httpRequest.getMethod();
-            String uri = httpRequest.getRequestURI();
-
-            if(
-                    uri == null
-                            // || uri.contains("swagger")
-                            || uri.contains("util/log")
-                            || uri.contains("ocr")
-            ) return;
-
-            String remoteAddr = httpRequest.getRemoteAddr();
-            httpRequest.setAttribute("remoteAddress", remoteAddr);
-
-            String uriPath = uri.replace("/api", "");
-
-            String contentType = httpRequest.getContentType();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("[HTTP] ").append(method).append(" --- URI: ").append(uriPath);
-
-            new MineLog.TimePrinter(sb.toString());
-            chain.doFilter(httpRequest, response);
-            return;
-
-            /*if(contentType != null) {
-                if(contentType.contains("multipart") || contentType.contains("audio") || contentType.contains("image") || contentType.contains("pdf")) {
-                    sb.append(" - Entity: ").append("Media");
-                } else {
-                    if(Objects.equals(method, "POST")) {
-                        CachedBodyHttpServletRequest cachedBodyRequest = new CachedBodyHttpServletRequest(httpRequest);
-                        String bodyContent = new String(cachedBodyRequest.getCachedBody(), StandardCharsets.UTF_8);
-
-                        // InputStream requestInputStream = httpRequest.getInputStream();
-                        // byte[] data = requestInputStream.readAllBytes();
-                        // String bodyContent = new String(data, StandardCharsets.UTF_8);
-
-                        sb.append(" - Entity: ").append(bodyContent);
-                        // sb.append(" - Entity: ").append("Body");
-
-                        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(sb.toString());
-                        chain.doFilter(cachedBodyRequest, response);
-                        return;
-                    }
-                }
-            }
-
-            MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(sb.toString());
-            chain.doFilter(httpRequest, response);*/
-
-        } else chain.doFilter(request, response);
+    public void doFilter(
+            ServletRequest request,
+            ServletResponse response,
+            FilterChain chain
+    ) throws IOException, ServletException {
+        chain.doFilter(request, response);
     }
 
     @Override

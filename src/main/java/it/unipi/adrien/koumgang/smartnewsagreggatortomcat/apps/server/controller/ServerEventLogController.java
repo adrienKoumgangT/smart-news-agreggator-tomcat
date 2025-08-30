@@ -17,8 +17,8 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 
-@Path("/server/error/log")
-@Tag(name = "Server Error Log", description = "API operation related to server error log")
+@Path("/server/event/log")
+@Tag(name = "Server Error Log", description = "API operation related to server event log")
 public class ServerEventLogController extends BaseController {
 
     @GET
@@ -33,13 +33,13 @@ public class ServerEventLogController extends BaseController {
     public Response getAllServerEventLogs(
             @HeaderParam("Authorization") String token
     ) throws Exception {
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not an admin");
         }
 
-        List<ServerEventLogView> serverEventLogViews = ServerEventLogService.getInstance().listServerEventLogs();
+        List<ServerEventLogView> serverEventLogViews = ServerEventLogService.getInstance().listServerEventLogs(userToken);
 
         return ApiResponseController.ok(serverEventLogViews);
     }
@@ -58,15 +58,15 @@ public class ServerEventLogController extends BaseController {
             @PathParam("event") String event,
             @HeaderParam("Authorization") String token
     ) throws Exception {
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not an admin");
         }
 
         List<ServerEventLogView> serverEventLogViews = event.isBlank()
-                ? ServerEventLogService.getInstance().listServerEventLogs()
-                : ServerEventLogService.getInstance().listServerEventLogsByEvent(event)
+                ? ServerEventLogService.getInstance().listServerEventLogs(userToken)
+                : ServerEventLogService.getInstance().listServerEventLogsByEvent(userToken, event)
                 ;
 
         return ApiResponseController.ok(serverEventLogViews);
@@ -86,15 +86,15 @@ public class ServerEventLogController extends BaseController {
             @PathParam("name") String name,
             @HeaderParam("Authorization") String token
     ) throws Exception {
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not an admin");
         }
 
         List<ServerEventLogView> serverEventLogViews = name.isBlank()
-                ? ServerEventLogService.getInstance().listServerEventLogs()
-                : ServerEventLogService.getInstance().listServerEventLogsByName(name)
+                ? ServerEventLogService.getInstance().listServerEventLogs(userToken)
+                : ServerEventLogService.getInstance().listServerEventLogsByName(userToken, name)
                 ;
 
         return ApiResponseController.ok(serverEventLogViews);
@@ -114,9 +114,9 @@ public class ServerEventLogController extends BaseController {
             @PathParam("idServerEventLog") String idServerEventLog,
             @HeaderParam("Authorization") String token
     ) throws Exception {
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not an admin");
         }
 
@@ -124,7 +124,7 @@ public class ServerEventLogController extends BaseController {
             return ApiResponseController.error("idTest is not valid");
         }
 
-        Optional<ServerEventLogView> optionalServerEventLogView = ServerEventLogService.getInstance().getServerEventLog(idServerEventLog);
+        Optional<ServerEventLogView> optionalServerEventLogView = ServerEventLogService.getInstance().getServerEventLog(userToken, idServerEventLog);
 
         if(optionalServerEventLogView.isPresent()) {
             return ApiResponseController.ok(optionalServerEventLogView.get());
@@ -148,9 +148,9 @@ public class ServerEventLogController extends BaseController {
             @PathParam("idServerEventLog") String idServerEventLog,
             @HeaderParam("Authorization") String token
     ) throws Exception {
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not an admin");
         }
 
@@ -158,7 +158,7 @@ public class ServerEventLogController extends BaseController {
             return ApiResponseController.error("idTest is not valid");
         }
 
-        boolean deleted = ServerEventLogService.getInstance().deleteServerEventLog(idServerEventLog);
+        boolean deleted = ServerEventLogService.getInstance().deleteServerEventLog(userToken, idServerEventLog);
 
         if(deleted) {
             return ApiResponseController.ok("Test deleted successfully");

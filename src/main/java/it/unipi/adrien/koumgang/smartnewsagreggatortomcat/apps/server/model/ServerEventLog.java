@@ -1,30 +1,33 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.*;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.BaseModel;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.RequestData;
 import org.bson.types.ObjectId;
 
+@MongoIndex(fields = {"event:1", "created_at:-1"})
 @MongoCollectionName("server-event-log")
-public class ServerEventLog {
+public class ServerEventLog extends BaseModel {
 
     @MongoId
     private ObjectId serverEventLogId;
 
     @MongoIndex
-    @MongoField("event")
+    @ModelField("event")
     private String event;
 
     @MongoEmbedded("request_data")
     private RequestData requestData;
 
-    @MongoField("curl")
+    @ModelField("curl")
     private String curl;
 
     @MongoIndex
-    @MongoField("name")
+    @ModelField("name")
     private String name;
 
-    @MongoField("message")
+    @ModelField("message")
     private String message;
 
     public ServerEventLog() {}

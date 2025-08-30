@@ -1,24 +1,25 @@
-package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model;
+package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model;
 
 
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.LoginHistoryView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoDateTime;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 
 import java.util.Date;
 
 public class LoginHistory {
 
-    @MongoField("login_time")
+    @ModelField("login_time")
     @MongoDateTime(utc = true)
     private Date loginTime;
 
-    @MongoField("status")
+    @ModelField("status")
     private String status;
 
-    @MongoField("ip_address")
+    @ModelField("ip_address")
     private String ipAddress;
 
-    @MongoField("user_agent")
+    @ModelField("user_agent")
     private String userAgent;
 
     public LoginHistory() {}
@@ -32,6 +33,13 @@ public class LoginHistory {
         this(loginTime, status);
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
+    }
+
+    public LoginHistory(LoginHistoryView loginHistoryView) {
+        this.loginTime = loginHistoryView.getLoginTime();
+        this.status = loginHistoryView.getStatus();
+        this.ipAddress = loginHistoryView.getIpAddress();
+        this.userAgent = loginHistoryView.getUserAgent();
     }
 
     // Getters and Setters

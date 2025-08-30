@@ -1,7 +1,7 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model;
 
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoField;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.RequestDataView;
 
 import java.util.HashMap;
@@ -19,22 +19,22 @@ public class RequestData {
      *     form: Optional[dict] = {}
      * */
 
-    @MongoField("url")
+    @ModelField("url")
     private String url;
 
-    @MongoField("method")
+    @ModelField("method")
     private String method;
 
-    @MongoField("body")
+    @ModelField("body")
     private Map<String, Object> body;
 
-    @MongoField("args")
+    @ModelField("args")
     private Map<String, Object> args;
 
-    @MongoField("headers")
+    @ModelField("headers")
     private Map<String, Object> headers;
 
-    @MongoField("form")
+    @ModelField("form")
     private Map<String, Object> form;
 
 

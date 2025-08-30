@@ -8,10 +8,10 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Mine server</title>
+    <title>Smart News Aggregator</title>
 </head>
 <body>
-    <h1>Mine server</h1>
+    <h1>Smart News Aggregator server</h1>
 
     <h2>Finance and Project management</h2>
 

@@ -1,15 +1,22 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view;
 
-public class RegisterView {
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
+public class RegisterView extends BaseView {
+
+    @Required
     private String username;
 
+    @Required
     private String firstName;
 
+    @Required
     private String lastName;
 
     private String email;
 
+    @Required
     private String password;
 
 

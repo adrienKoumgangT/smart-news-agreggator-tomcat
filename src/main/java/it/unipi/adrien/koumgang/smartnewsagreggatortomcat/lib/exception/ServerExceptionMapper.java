@@ -19,7 +19,6 @@ import jakarta.ws.rs.ext.Provider;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
@@ -62,7 +61,7 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
                 MultivaluedMap<String, String> paramsMap = uriInfo.getQueryParameters();
 
                 String requestBody;
-                if (!ServerUtils.shouldLogBody(method, request.getMediaType())) {
+                if (ServerUtils.shouldSkipBodyLog(method, request.getMediaType())) {
                     requestBody = null;
                 } else {
                     requestBody = (String) request.getProperty(ServerUtils.RAW_BODY_PROP);
@@ -87,10 +86,12 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
                 );
 
                 try {
+                    String idUser = null;
                     if(statusCode != 401 && headerMap.containsKey(HttpHeaders.AUTHORIZATION)) {
                         String authorization = headerMap.get(HttpHeaders.AUTHORIZATION).getFirst();
                         try {
-                            UserToken user_read = TokenManager.readToken(authorization);
+                            UserToken userToken = TokenManager.readToken(authorization);
+                            idUser = userToken.getIdUser();
                         } catch (Exception ignored) { }
                     }
 
@@ -120,7 +121,8 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
                                     throwable.getClass().getSimpleName(),
                                     errorMessage,
                                     curlCommand,
-                                    requestDataView
+                                    requestDataView,
+                                    idUser
                             );
 
                 } catch (Exception ignored) { }

@@ -2,6 +2,7 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mo
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.*;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.IdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.model.annotation.ModelField;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -665,17 +666,17 @@ public class MongoAnnotationProcessor {
             return mongoId.value();
         }
 
-        MongoField mongoField = field.getAnnotation(MongoField.class);
-        if (mongoField != null) {
-            return mongoField.value();
+        ModelField modelField = field.getAnnotation(ModelField.class);
+        if (modelField != null) {
+            return modelField.value();
         }
 
         return field.getName();
     }
 
     private static boolean isFieldIgnored(Field field) {
-        MongoField mongoField = field.getAnnotation(MongoField.class);
-        return mongoField != null && mongoField.ignore();
+        ModelField modelField = field.getAnnotation(ModelField.class);
+        return modelField != null && modelField.ignore();
     }
 
     private static Class<?> getGenericType(Field field) {
@@ -693,6 +694,61 @@ public class MongoAnnotationProcessor {
     public static Date nowMinusDays(int days) {
         // LocalDateTime in UTC minus X days
         LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).minusDays(days);
+
+        // Convert LocalDateTime -> Instant (with UTC)
+        Instant instant = ldt.toInstant(ZoneOffset.UTC);
+
+        // Convert Instant -> java.util.Date
+        return Date.from(instant);
+    }
+
+    public static Date nowPlusHours(int hours) {
+        // LocalDateTime in UTC minus X days
+        LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).plusHours(hours);
+
+        // Convert LocalDateTime -> Instant (with UTC)
+        Instant instant = ldt.toInstant(ZoneOffset.UTC);
+
+        // Convert Instant -> java.util.Date
+        return Date.from(instant);
+    }
+
+    public static Date nowPlusMinutes(int minutes) {
+        // LocalDateTime in UTC minus X days
+        LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(minutes);
+
+        // Convert LocalDateTime -> Instant (with UTC)
+        Instant instant = ldt.toInstant(ZoneOffset.UTC);
+
+        // Convert Instant -> java.util.Date
+        return Date.from(instant);
+    }
+
+    public static Date nowPlusDays(int days) {
+        // LocalDateTime in UTC minus X days
+        LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).plusDays(days);
+
+        // Convert LocalDateTime -> Instant (with UTC)
+        Instant instant = ldt.toInstant(ZoneOffset.UTC);
+
+        // Convert Instant -> java.util.Date
+        return Date.from(instant);
+    }
+
+    public static Date nowPlusMonth(int months) {
+        // LocalDateTime in UTC minus X days
+        LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).plusMonths(months);
+
+        // Convert LocalDateTime -> Instant (with UTC)
+        Instant instant = ldt.toInstant(ZoneOffset.UTC);
+
+        // Convert Instant -> java.util.Date
+        return Date.from(instant);
+    }
+
+    public static Date nowPlusYear(int years) {
+        // LocalDateTime in UTC minus X days
+        LocalDateTime ldt = LocalDateTime.now(ZoneOffset.UTC).plusYears(years);
 
         // Convert LocalDateTime -> Instant (with UTC)
         Instant instant = ldt.toInstant(ZoneOffset.UTC);

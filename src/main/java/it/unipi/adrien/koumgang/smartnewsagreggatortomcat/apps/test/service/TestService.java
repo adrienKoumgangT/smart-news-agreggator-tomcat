@@ -32,9 +32,9 @@ public class TestService {
         return "test:" + id;
     }
 
-    public Optional<TestView> getTestById(String id) {
+    public TestView getTestById(String id) {
         if (!MongoAnnotationProcessor.isValidObjectId(id)) {
-            return Optional.empty();
+            return null;
         }
 
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [GET] id: " + id);
@@ -44,9 +44,8 @@ public class TestService {
         try {
             Object cacheData = CacheManager.getInstance().getHandler().get(testKey);
             if(cacheData instanceof Test) {
-                TestView testView = new TestView((Test) cacheData);
 
-                return Optional.of(testView);
+                return new TestView((Test) cacheData);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,15 +66,15 @@ public class TestService {
 
                 timePrinter.log();
 
-                return Optional.of(testView);
+                return testView;
             } else {
-                timePrinter.error("Test not found");
+                timePrinter.missing("Test not found");
             }
         } catch (IllegalArgumentException e) {
             timePrinter.error(e.getMessage());
         }
 
-        return Optional.empty();
+        return null;
     }
 
     public TestView saveTest(TestView testDetails) {
@@ -83,9 +82,21 @@ public class TestService {
 
         try {
             Test test = new Test(testDetails);
-            Test testNew = testDao.save(test);
+            ObjectId testId = testDao.save(test);
 
-            TestView testView = new TestView(testNew);
+            if(testId == null) {
+                timePrinter.error("Error saving test");
+                return null;
+            }
+
+            Optional<Test> optTest = testDao.findById(testId);
+
+            if(optTest.isEmpty()) {
+                timePrinter.error("Error saving test");
+                return null;
+            }
+
+            TestView testView = new TestView(optTest.get());
 
             timePrinter.log();
 
@@ -119,11 +130,11 @@ public class TestService {
 
                 return updated;
             }
-            return false;
         } catch (IllegalArgumentException e) {
             timePrinter.error(e.getMessage());
-            return false;
         }
+
+        return false;
     }
 
     public boolean deleteTest(String id) {
@@ -158,6 +169,18 @@ public class TestService {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [LIST] ");
 
         List<Test> tests = testDao.findAll();
+
+        List<TestView> testViews = tests.stream().map(TestView::new).toList();
+
+        timePrinter.log();
+
+        return testViews;
+    }
+
+    public List<TestView> listTests(int page, int pageSize) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [LIST] page: " + page + ", size: " + pageSize);
+
+        List<Test> tests = testDao.findAll(page, pageSize);
 
         List<TestView> testViews = tests.stream().map(TestView::new).toList();
 
