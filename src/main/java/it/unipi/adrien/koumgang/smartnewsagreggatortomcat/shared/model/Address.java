@@ -40,6 +40,8 @@ public class Address {
         this.state      = addressView.getState();
         this.zipCode    = addressView.getZipCode();
         this.country    = addressView.getCountry();
+
+        this.primary = addressView.getPrimary();
     }
 
     // Getters and Setters

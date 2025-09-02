@@ -79,6 +79,10 @@ public class User extends BaseModel {
     public void update(UserMeView user) {
         this.firstName  = user.getFirstName();
         this.lastName   = user.getLastName();
+
+        if(user.getAddresses() != null) {
+            this.addresses = user.getAddresses().stream().map(Address::new).toList();
+        } else this.addresses = new ArrayList<>();
     }
 
     public void update(UserView user) {
@@ -86,6 +90,10 @@ public class User extends BaseModel {
         this.lastName   = user.getLastName();
         this.isAdmin    = user.getIsAdmin();
         this.status     = user.getStatus();
+
+        if(user.getAddresses() != null) {
+            this.addresses = user.getAddresses().stream().map(Address::new).toList();
+        } else this.addresses = new ArrayList<>();
     }
 
     public ObjectId getUserId() {
