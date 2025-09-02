@@ -3,6 +3,7 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view.RegisterView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.AddressView;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 
 public class UserMeView extends UserExternView {
 
+    @Required
     private String email;
 
     private Date lastLoginAt;

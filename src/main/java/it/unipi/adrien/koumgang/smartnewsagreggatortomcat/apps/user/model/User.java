@@ -1,7 +1,6 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model;
 
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view.RegisterView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.service.UserStatus;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserMeView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.UserView;
@@ -85,7 +84,7 @@ public class User extends BaseModel {
     public void update(UserView user) {
         this.firstName  = user.getFirstName();
         this.lastName   = user.getLastName();
-        this.isAdmin    = user.getAdmin();
+        this.isAdmin    = user.getIsAdmin();
         this.status     = user.getStatus();
     }
 
@@ -152,7 +151,7 @@ public class User extends BaseModel {
     public boolean canLogin() {
         if(status == null) return false;
 
-        UserStatus userStatus = UserStatus.getUserStatus(status);
+        UserStatus userStatus = UserStatus.fromCode(status);
 
         if(userStatus == null) return false;
 

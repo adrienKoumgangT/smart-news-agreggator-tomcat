@@ -5,7 +5,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
 public class RegisterView extends BaseView {
 
-    @Required
+
     private String username;
 
     @Required
@@ -14,6 +14,7 @@ public class RegisterView extends BaseView {
     @Required
     private String lastName;
 
+    @Required
     private String email;
 
     @Required

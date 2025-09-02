@@ -23,6 +23,9 @@ public class ApiConfiguration extends BaseConfiguration {
     @ConfigValue(key = "jwts.public.key")
     private String jwsPublicKey;
 
+    @ConfigValue(key = "jwts.key")
+    private String jwsKey;
+
 
     public ApiConfiguration() throws Exception {init();}
 
@@ -44,5 +47,9 @@ public class ApiConfiguration extends BaseConfiguration {
 
     public String getJwsPublicKey() {
         return jwsPublicKey;
+    }
+
+    public String getJwsKey() {
+        return jwsKey;
     }
 }

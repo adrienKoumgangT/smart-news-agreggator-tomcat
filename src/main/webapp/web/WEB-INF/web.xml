@@ -15,10 +15,18 @@
             <param-name>cors.allowed.methods</param-name>
             <param-value>GET,PATCH,POST,HEAD,OPTIONS,PUT,DELETE</param-value>
         </init-param>
+        <!-- The names of the supported author request headers.
+        These are advertised through the Access-Control-Allow-Headers header.
+        The CORS Filter implements this by simply echoing the requested value back to the browser.
+        -->
         <init-param>
             <param-name>cors.allowed.headers</param-name>
             <param-value>Content-Type,X-Requested-With,accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Authorization,app-alert,X-Total-Count,file,filename,X-File-Name,Cache-Control</param-value>
         </init-param>
+        <!-- List of the response headers other than simple response headers that the browser should expose to
+        the author of the cross-domain request through the XMLHttpRequest.getResponseHeader() method.
+        The CORS filter supplies this information through the Access-Control-Expose-Headers header.
+        -->
         <init-param>
             <param-name>cors.exposed.headers</param-name>
             <param-value>Access-Control-Allow-Origin,Access-Control-Allow-Credentials,Authorization,app-alert,app-alert-type,X-Total-Count,filename</param-value>
@@ -48,6 +56,7 @@
         <filter-name>SwaggerIpWhiteListFilter</filter-name>
         <url-pattern>/swagger-ui/*</url-pattern>
     </filter-mapping>
+
     <filter>
         <filter-name>OpenApiIpWhiteListFilter</filter-name>
         <filter-class>it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.filter.swagger.OpenApiIpWhiteListFilter</filter-class>

@@ -68,14 +68,14 @@ public class AuthController extends BaseController {
 
         UserView userView = new UserView(registerView);
 
-        boolean registration = AuthService.getInstance()
+        UserView user = AuthService.getInstance()
                 .registration(
                         request, headers, uriInfo,
                         userView, registerView.getPassword(),
                         null
                 );
 
-        if(!registration) {
+        if(user == null) {
             return ApiResponseController.error("Registration failed");
         }
 
@@ -102,7 +102,7 @@ public class AuthController extends BaseController {
 
         AuthService authService = AuthService.getInstance();
 
-        String token = authService.login(request, headers, uriInfo, loginView.getUsername(), loginView.getPassword());
+        String token = authService.login(request, headers, uriInfo, loginView.getEmail(), loginView.getPassword());
 
         if(token == null) {
             return ApiResponseController.error("Invalid username/password");
@@ -131,7 +131,7 @@ public class AuthController extends BaseController {
 
         AuthService authService = AuthService.getInstance();
 
-        String token = authService.loginAlt(request, headers, uriInfo, loginView.getUsername(), loginView.getPassword());
+        String token = authService.loginAlt(request, headers, uriInfo, loginView.getEmail(), loginView.getPassword());
 
         if(token == null) {
             return ApiResponseController.error("Invalid username/password");
@@ -140,6 +140,25 @@ public class AuthController extends BaseController {
         return ApiResponseController.okWithHeader("Authorization", "Bearer " + token);
     }
 
+
+    @GET
+    @Path("logout")
+    @Operation(summary = "Make token invalid", description = "Make the token of the current user invalid for api call")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response logout(@HeaderParam("Authorization") String token) throws Exception {
+        UserToken user = getUserToken(token);
+
+        // TODO: make the token this current user invalid
+
+        return ApiResponseController.ok();
+    }
 
     @GET
     @Path("me")

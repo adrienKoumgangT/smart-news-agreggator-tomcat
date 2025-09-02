@@ -52,7 +52,7 @@ public class AuthService {
     }
 
 
-    public boolean registration(
+    public UserView registration(
             ContainerRequestContext request,
             HttpHeaders headers,
             UriInfo uriInfo,
@@ -74,11 +74,13 @@ public class AuthService {
             requestDataView = null;
         }
 
-        Optional<User> optUser = userService.getUserByUsername(userViewParam.getUsername());
+        // Optional<User> optUser = userService.getUserByUsername(userViewParam.getUsername());
+        Optional<User> optUser = userService.getUserByEmail(userViewParam.getEmail());
         if(optUser.isPresent()) {
             authEventLogService.saveAuthEventLog(
                     event,
-                    "User with username " + userViewParam.getUsername() + " already exists",
+                    // "User with username " + userViewParam.getUsername() + " already exists",
+                    "User with email " + userViewParam.getEmail() + " already exists",
                     false,
                     requestDataView,
                     null,
@@ -89,13 +91,13 @@ public class AuthService {
 
             timePrinter.missing("User with username " + userViewParam.getUsername() + " already exists");
 
-            return false;
+            return null;
         }
 
 
         User user = new User(userViewParam);
         user.setAdmin(false);
-        user.setStatus(UserStatus.PENDING.getStatus());
+        user.setStatus(UserStatus.PENDING.getCode());
         if(password != null) {
             user.setPassword(password);
         } else {
@@ -119,7 +121,7 @@ public class AuthService {
 
             timePrinter.missing("Failed to save user");
 
-            return false;
+            return null;
         }
 
         authEventLogService.saveAuthEventLog(
@@ -135,7 +137,7 @@ public class AuthService {
 
         timePrinter.log();
 
-        return true;
+        return userView;
     }
 
 
@@ -159,7 +161,8 @@ public class AuthService {
             requestDataView = null;
         }
 
-        Optional<User> optUser = userService.getUserByUsername(username);
+        // Optional<User> optUser = userService.getUserByUsername(username);
+        Optional<User> optUser = userService.getUserByEmail(username);
 
         if(optUser.isEmpty()) {
             authEventLogService.saveAuthEventLog(
@@ -251,7 +254,8 @@ public class AuthService {
             requestDataView = null;
         }
 
-        Optional<User> optUser = userService.getUserByUsername(username);
+        // Optional<User> optUser = userService.getUserByUsername(username);
+        Optional<User> optUser = userService.getUserByEmail(username);
 
         if(optUser.isEmpty()) {
             timePrinter.missing("User not found");

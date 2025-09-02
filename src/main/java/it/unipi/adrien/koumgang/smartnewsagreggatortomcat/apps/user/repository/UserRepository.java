@@ -103,7 +103,7 @@ public class UserRepository extends BaseRepository implements UserDao {
     public List<User> findByEmail(String email) {
         List<User> users = new ArrayList<>();
         Bson filter = Filters.eq(
-                MongoAnnotationProcessor.getFieldName(getField("email")),
+                "email.email",
                 email
         );
 

@@ -21,7 +21,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
-import java.util.Optional;
 
 @Path("/test")
 @Tag(name = "Tests", description = "API operation related to test")
@@ -31,7 +30,10 @@ public class TestController extends BaseController {
     @GET
     @Operation(summary = "Get list of a Test instance", description = "Return a list of Test instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = TestView.class)) }
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -128,9 +130,9 @@ public class TestController extends BaseController {
         return ApiResponseController.ok(test);
     }
 
-    @POST
+    @PUT
     @Path("{idTest}")
-    @Operation(summary = "Post a Test instance", description = "Add a Test instance")
+    @Operation(summary = "Update a Test instance", description = "Return a Test instance updated")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200", description = "Successful operation",
@@ -142,7 +144,7 @@ public class TestController extends BaseController {
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postTest(
+    public Response updateTest(
             TestView testView,
             @Parameter(name = "idTest", description = "Test id", example = "68b28e50c8c86a733de632d8")
             @PathParam("idTest") String idTest
@@ -166,16 +168,19 @@ public class TestController extends BaseController {
     }
 
 
-    @PUT
-    @Operation(summary = "Put a Test instance", description = "Update a Test instance")
+    @POST
+    @Operation(summary = "Create new Test instance", description = "Return a new Test instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = TestView.class)) }
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putTest(
+    public Response createTest(
             TestView testView
     ) throws Exception {
         testView.checkIfValid();

@@ -3,6 +3,7 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.to
 import com.google.gson.GsonBuilder;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.configuration.service.ApiConfiguration;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe.InvalidTokenException;
@@ -10,13 +11,26 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe.Inv
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
 public class TokenManager {
-    private static final SecretKey key = Jwts.SIG.HS512.key().build();
-    private static final Long TOKEN_EXPIRATION_TIME = 7200000L; // 2h
+    // Load from env or config
+    private static final String SECRET;
+
+    static {
+        try {
+            SECRET = (new ApiConfiguration()).getJwsKey();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    // private static final SecretKey key = Jwts.SIG.HS512.key().build();
+    // private static final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    private static final SecretKey key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
+    private static final Long TOKEN_EXPIRATION_TIME = 12 * 60 * 60 * 1000L; // 12h
 
     public static String createJWTAndSign(UserToken user) {
         try {

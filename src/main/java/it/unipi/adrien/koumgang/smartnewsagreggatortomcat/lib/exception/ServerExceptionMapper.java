@@ -10,6 +10,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.tok
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.configuration.service.ApiConfiguration;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.ApiResponseController;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe.InvalidAuthentificationException;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.unsafe.UnauthorizedException;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.RequestDataView;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -130,7 +131,7 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
 
-        return (throwable instanceof UnauthorizedException)
+        return (throwable instanceof UnauthorizedException || throwable instanceof InvalidAuthentificationException)
                 ? ApiResponseController.unauthorized(throwable.getMessage())
                 : ApiResponseController.error(throwable.getMessage())
                 ;

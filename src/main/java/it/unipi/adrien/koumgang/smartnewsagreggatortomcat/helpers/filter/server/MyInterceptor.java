@@ -21,27 +21,27 @@ public class MyInterceptor implements ContainerRequestFilter, ContainerResponseF
 
 
     @Override
-    public void filter(ContainerRequestContext ctx) throws IOException {
+    public void filter(ContainerRequestContext request) throws IOException {
         // String header = new GsonBuilder().serializeNulls().create().toJson(containerRequestContext.getHeaders());
         // String method = containerRequestContext.getMethod();
         // System.out.println("[Request] method: " + method + " --- header: " + header);
 
 
-        final String method = ctx.getMethod();
-        final String path = ctx.getUriInfo() != null ? ctx.getUriInfo().getPath() : "";
+        final String method = request.getMethod();
+        final String path = request.getUriInfo() != null ? request.getUriInfo().getPath() : "";
 
-        if (ServerUtils.shouldSkipBodyLog(method, ctx.getMediaType())) {
+        if (ServerUtils.shouldSkipBodyLog(method, request.getMediaType())) {
             MineLog.blue("[HTTP] " + method + " --- URI: /" + path);
             return; // don’t touch the stream
         }
 
         // Read the request entity stream fully
-        byte[] bodyBytes = ServerUtils.readAll(ctx.getEntityStream());
+        byte[] bodyBytes = ServerUtils.readAll(request.getEntityStream());
         // store for later (ExceptionMapper, etc.)
-        ctx.setProperty(ServerUtils.RAW_BODY_PROP, new String(bodyBytes, java.nio.charset.StandardCharsets.UTF_8));
+        request.setProperty(ServerUtils.RAW_BODY_PROP, new String(bodyBytes, java.nio.charset.StandardCharsets.UTF_8));
         // restore for normal processing
         // Reset entity stream so JAX-RS/Jackson can read it later
-        ctx.setEntityStream(new ByteArrayInputStream(bodyBytes));
+        request.setEntityStream(new ByteArrayInputStream(bodyBytes));
 
         // Prepare a safe preview for logging
         String body = new String(bodyBytes, StandardCharsets.UTF_8);
@@ -57,9 +57,9 @@ public class MyInterceptor implements ContainerRequestFilter, ContainerResponseF
 
 
     @Override
-    public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext containerResponseContext) throws IOException {
-        // int statusResponse = containerResponseContext.getStatus();
-        // String header = new GsonBuilder().serializeNulls().create().toJson(containerResponseContext.getHeaders());
+    public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
+        // int statusResponse = response.getStatus();
+        // String header = new GsonBuilder().serializeNulls().create().toJson(response.getHeaders());
         // System.out.println("[Response] status: " + statusResponse + " --- header: " + header);
     }
 

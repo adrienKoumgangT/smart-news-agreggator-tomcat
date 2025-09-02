@@ -18,6 +18,8 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.ApiResp
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.BaseController;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.PaginationView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.DataBoolean;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.DataLong;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.*;
@@ -90,7 +92,7 @@ public class UserController extends BaseController {
     }
 
 
-    @PUT
+    @POST
     @Operation(summary = "Registration", description = "Create new user in the system")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful operation"),
@@ -108,21 +110,77 @@ public class UserController extends BaseController {
     ) throws Exception {
         userView.checkIfValid();
 
-        UserToken user = getUserToken(token);
+        UserToken userToken = getUserToken(token);
 
-        if(!user.isAdmin()) {
+        if(!userToken.isAdmin()) {
             return ApiResponseController.unauthorized("You are not admin");
         }
 
-        boolean registration = AuthService.getInstance()
+        UserView user = AuthService.getInstance()
                 .registration(
                         request, headers, uriInfo,
                         userView, null,
-                        user.getIdUser()
+                        userToken.getIdUser()
                 );
 
-        if(!registration) {
+        if(user == null) {
             return ApiResponseController.error("Registration failed");
+        }
+
+        return ApiResponseController.ok(user);
+    }
+
+    @POST
+    @Path("invites")
+    @Operation(summary = "invite users data instance", description = "Return ok")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = DataLong.class))}
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response inviteUsers(
+            List<String> usersInvite,
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not admin");
+        }
+
+        return ApiResponseController.ok(new DataLong(0L));
+    }
+
+
+    @POST
+    @Path("{idUser}/invite")
+    @Operation(summary = "invite user data instance", description = "Return ok")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = DataLong.class))}
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response inviteUser(
+            @Parameter(name = "idUser", description = "User id", example = "68b28e50c8c86a733de632d8")
+            @PathParam("idUser") String idUser,
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not admin");
         }
 
         return ApiResponseController.ok();
@@ -167,7 +225,7 @@ public class UserController extends BaseController {
         return ApiResponseController.ok(user);
     }
 
-    @POST
+    @PUT
     @Path("{idUser}")
     @Operation(summary = "Update a user data instance", description = "Return a updated user instance")
     @ApiResponses(value = {
@@ -211,13 +269,88 @@ public class UserController extends BaseController {
         return ApiResponseController.ok(user);
     }
 
+    @PUT
+    @Path("{idUser}/admin")
+    @Operation(summary = "Update a user data admin instance", description = "Return a updated user admin instance")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = DataBoolean.class))}
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateUserAdmin(
+            DataBoolean dataBoolean,
+            @Parameter(name = "idUser", description = "User id", example = "68b28e50c8c86a733de632d8")
+            @PathParam("idUser") String idUser,
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not admin");
+        }
+
+        dataBoolean.checkIfValid();
+
+        UserService userService = UserService.getInstance();
+
+        boolean updated = userService.updateUserAdmin(userToken, idUser, dataBoolean.getData());
+        if(!updated) {
+            return ApiResponseController.error("Error during update user");
+        }
+
+        UserView user = userService.getUserById(userToken, idUser);
+
+        if(user == null) {
+            return ApiResponseController.error("Error during update user");
+        }
+
+        return ApiResponseController.ok(user);
+    }
+
+    @POST
+    @Path("{idUser}/reset-password")
+    @Operation(
+            summary = "reset user password data instance",
+            description = "Send mail with reset password instruction and return ok"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = { @Content(schema = @Schema(implementation = DataLong.class))}
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetPasswordUser(
+            @Parameter(name = "idUser", description = "User id", example = "68b28e50c8c86a733de632d8")
+            @PathParam("idUser") String idUser,
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not admin");
+        }
+
+        return ApiResponseController.ok();
+    }
+
     @GET
     @Path("me")
     @Operation(summary = "Get a User by me", description = "Return a User as per me")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200", description = "User found",
-                    content = { @Content(schema = @Schema(implementation = UserView.class))}
+                    content = { @Content(schema = @Schema(implementation = UserMeView.class))}
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "User Not found"),
@@ -230,7 +363,7 @@ public class UserController extends BaseController {
     ) throws Exception {
         UserToken userToken = getUserToken(token);
 
-        UserView user = UserService.getInstance().getUserById(userToken, userToken.getIdUser());
+        UserMeView user = UserService.getInstance().getUserById(userToken, userToken.getIdUser());
 
         if(user == null) {
             return ApiResponseController.notFound("User not found");
@@ -239,13 +372,13 @@ public class UserController extends BaseController {
         return ApiResponseController.ok(user);
     }
 
-    @POST
+    @PUT
     @Path("me")
     @Operation(summary = "Update a my user data instance", description = "Return a updated user instance")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200", description = "Successful operation",
-                    content = { @Content(schema = @Schema(implementation = UserMeView.class))}
+                    content = { @Content(schema = @Schema(implementation = UserMeView.class)) }
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "User Not found"),

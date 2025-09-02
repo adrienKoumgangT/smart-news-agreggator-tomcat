@@ -2,17 +2,18 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.auth.view.RegisterView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserEmail;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserPassword;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
 public class UserExternView extends BaseView {
 
-    private String userId;
+    private String idUser;
 
+    @Required
     private String firstName;
 
+    @Required
     private String lastName;
 
     private String username;
@@ -24,7 +25,7 @@ public class UserExternView extends BaseView {
     public UserExternView() {}
 
     public UserExternView(User user) {
-        this.userId = user.getUserId() != null ? new StringIdConverter().fromObjectId(user.getUserId()) : null;
+        this.idUser = user.getUserId() != null ? new StringIdConverter().fromObjectId(user.getUserId()) : null;
 
         this.firstName  = user.getFirstName();
         this.lastName   = user.getLastName();
@@ -40,8 +41,8 @@ public class UserExternView extends BaseView {
     }
 
 
-    public String getUserId() {
-        return userId;
+    public String getIdUser() {
+        return idUser;
     }
 
     public String getFirstName() {
