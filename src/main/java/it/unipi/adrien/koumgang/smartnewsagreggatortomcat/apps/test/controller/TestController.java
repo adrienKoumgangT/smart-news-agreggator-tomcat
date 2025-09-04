@@ -32,7 +32,7 @@ public class TestController extends BaseController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200", description = "Successful operation",
-                    content = { @Content(schema = @Schema(implementation = TestView.class)) }
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TestView.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")

@@ -6,9 +6,11 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mon
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.Required;
 
+import java.util.Date;
+
 public class ServerEventLogSimpleView extends BaseView {
 
-    private String serverEventLogId;
+    private String idServerEventLog;
 
     @Required
     private String event;
@@ -20,19 +22,23 @@ public class ServerEventLogSimpleView extends BaseView {
 
     private String message;
 
+    private Date createdAt;
+
     public ServerEventLogSimpleView() {}
 
     public ServerEventLogSimpleView(ServerEventLog serverEventLog) {
-        this.serverEventLogId = StringIdConverter.getInstance().fromObjectId(serverEventLog.getServerEventLogId());
+        this.idServerEventLog = StringIdConverter.getInstance().fromObjectId(serverEventLog.getServerEventLogId());
 
         this.event = serverEventLog.getEvent();
         this.curl = serverEventLog.getCurl();
         this.name = serverEventLog.getName();
         this.message = serverEventLog.getMessage();
+
+        this.createdAt  = serverEventLog.getCreatedAt();
     }
 
-    public String getServerEventLogId() {
-        return serverEventLogId;
+    public String getIdServerEventLog() {
+        return idServerEventLog;
     }
 
     public String getEvent() {
@@ -49,5 +55,9 @@ public class ServerEventLogSimpleView extends BaseView {
 
     public String getMessage() {
         return message;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
     }
 }

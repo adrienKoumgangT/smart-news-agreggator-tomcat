@@ -52,7 +52,7 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
         if(DEBUG) throwable.printStackTrace();
 
 
-        if(!(throwable instanceof SafeException)) {
+        if(!skipException(throwable) ) {
             if(request != null) {
 
                 // Extract Request Info
@@ -135,6 +135,15 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
                 ? ApiResponseController.unauthorized(throwable.getMessage())
                 : ApiResponseController.error(throwable.getMessage())
                 ;
+    }
+
+
+    private static boolean skipException(Throwable throwable) {
+        return (
+                (throwable instanceof SafeException)
+                        || (throwable instanceof jakarta.ws.rs.NotFoundException)
+                        || (throwable instanceof jakarta.ws.rs.NotAllowedException)
+        );
     }
 
 }

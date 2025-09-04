@@ -1,10 +1,14 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.service.ServerEventLogService;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.view.EventNamesView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.view.ServerEventLogView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.BaseController;
@@ -15,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Path("/server/event/log")
@@ -24,7 +29,10 @@ public class ServerEventLogController extends BaseController {
     @GET
     @Operation(summary = "Get list of a Server Event Log instance", description = "Get a Server Event Log instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ServerEventLogView.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -45,10 +53,69 @@ public class ServerEventLogController extends BaseController {
     }
 
     @GET
+    @Path("event")
+    @Operation(summary = "Get list of a Server Event Log Event Name", description = "Return a list of Server Event Log Name")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllServerEventLogEvents(
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not an admin");
+        }
+
+        List<String> events = ServerEventLogService.getInstance().listDistinctEvents(userToken);
+
+        return ApiResponseController.ok(events);
+    }
+
+    @GET
+    @Path("event/name")
+    @Operation(summary = "Get list of a Server Event Log Event Name", description = "Return a list of Server Event Log Name")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation (Map of event to list of names)",
+                    content = @Content(array = @ArraySchema(schema =  @Schema(implementation = EventNamesView.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllServerEventLogEventsNames(
+            @HeaderParam("Authorization") String token
+    ) throws Exception {
+        UserToken userToken = getUserToken(token);
+
+        if(!userToken.isAdmin()) {
+            return ApiResponseController.unauthorized("You are not an admin");
+        }
+
+        Map<String, List<String>> eventsNames = ServerEventLogService.getInstance().getDistinctEventsNames(userToken);
+
+        List<EventNamesView> result = EventNamesView.fromMap(eventsNames);
+
+        return ApiResponseController.ok(result);
+    }
+
+    @GET
     @Path("by/event/{event}")
     @Operation(summary = "Get list of a Server Event Log instance by event", description = "Get a Server Event Log instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ServerEventLogView.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -76,7 +143,10 @@ public class ServerEventLogController extends BaseController {
     @Path("by/name/{name}")
     @Operation(summary = "Get list of a Server Event Log instance by event", description = "Get a Server Event Log instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ServerEventLogView.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -104,7 +174,10 @@ public class ServerEventLogController extends BaseController {
     @Path("{idServerEventLog}")
     @Operation(summary = "Get a Server Event Log instance by event", description = "Get a Server Event Log instance")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successful operation"),
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(schema = @Schema(implementation = ServerEventLogView.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -161,9 +234,9 @@ public class ServerEventLogController extends BaseController {
         boolean deleted = ServerEventLogService.getInstance().deleteServerEventLog(userToken, idServerEventLog);
 
         if(deleted) {
-            return ApiResponseController.ok("Test deleted successfully");
+            return ApiResponseController.ok("Server Event Log deleted successfully");
         } else {
-            return ApiResponseController.error("Error during delete test");
+            return ApiResponseController.error("Error during delete server event log");
         }
     }
 

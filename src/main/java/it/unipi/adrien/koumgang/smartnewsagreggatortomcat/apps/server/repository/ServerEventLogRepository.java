@@ -1,5 +1,6 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.server.repository;
 
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -18,9 +19,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ServerEventLogRepository extends BaseRepository implements ServerEventLogDao {
 
@@ -89,8 +88,12 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
      */
     @Override
     public List<ServerEventLog> findAll() {
+        FindIterable<Document> cursor = serverEventLogCollection
+                .find()
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
+
         List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : serverEventLogCollection.find()) {
+        for (Document document : cursor) {
             serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
         }
         return serverEventLogs;
@@ -286,6 +289,34 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
     public boolean delete(ObjectId id) {
         DeleteResult result = serverEventLogCollection.deleteOne(Filters.eq("_id", id));
         return result.getDeletedCount() > 0;
+    }
+
+
+    public List<String> listDistinctEvents() {
+        List<String> events = new ArrayList<>();
+        serverEventLogCollection.distinct("event", String.class).into(events);
+        return events;
+    }
+
+    public Map<String, List<String>> mapDistinctEventsNames() {
+        List<Document> pipeline = Arrays.asList(
+                new Document("$group", new Document("_id", new Document("event", "$event").append("name", "$name"))),
+                new Document("$project", new Document("_id", 0).append("event", "$_id.event").append("name", "$_id.name"))
+        );
+
+        AggregateIterable<Document> results = serverEventLogCollection.aggregate(pipeline);
+
+        Map<String, List<String>> events = new HashMap<>();
+        for (Document document : results) {
+            String event  = document.getString("event");
+            String name = document.getString("name");
+            if(!events.containsKey(event)) {
+                events.put(event, new ArrayList<>());
+            }
+            events.get(event).add(name);
+        }
+
+        return events;
     }
 
 }

@@ -7,6 +7,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.RequestDa
 import org.bson.types.ObjectId;
 
 @MongoIndex(fields = {"event:1", "created_at:-1"})
+@MongoIndex(fields = {"event:1", "name:1", "created_at:-1"})
 @MongoCollectionName("server-event-log")
 public class ServerEventLog extends BaseModel {
 

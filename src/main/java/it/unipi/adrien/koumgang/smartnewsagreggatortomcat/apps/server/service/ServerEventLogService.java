@@ -13,7 +13,9 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.model.RequestDa
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.RequestDataView;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class ServerEventLogService {
@@ -202,6 +204,24 @@ public class ServerEventLogService {
         timePrinter.log();
 
         return count;
+    }
+
+    public List<String> listDistinctEvents(UserToken userToken) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [DISTINCT EVENTS] ");
+
+        List<String> events = ((ServerEventLogRepository) serverEventLogDao).listDistinctEvents();
+
+        timePrinter.log();
+        return events;
+    }
+
+    public Map<String, List<String>> getDistinctEventsNames(UserToken userToken) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [SERVER EVENT LOG] [DISTINCT EVENTS NAMES] ");
+
+        Map<String, List<String>> eventsNames = ((ServerEventLogRepository) serverEventLogDao).mapDistinctEventsNames();
+
+        timePrinter.log();
+        return eventsNames;
     }
 
 }
