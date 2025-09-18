@@ -1,5 +1,6 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.repository;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -9,6 +10,7 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.dao.UserDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserEmail;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.UserPassword;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.view.LoginHistoryView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.utils.DateTimeInitializer;
@@ -22,10 +24,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class UserRepository extends BaseRepository implements UserDao {
 
@@ -36,6 +35,10 @@ public class UserRepository extends BaseRepository implements UserDao {
 
     private final MongoCollection<Document> userCollection;
     private final Class<User> userClass = User.class;
+    private final Class<UserEmail> emailClass = UserEmail.class;
+    private final Class<UserPassword> userPasswordClass = UserPassword.class;
+    private final Class<LoginHistory> loginHistoryClass = LoginHistory.class;
+    private final Class<Address> addressClass = Address.class;
 
     public UserRepository(MongoDatabase database) {
         String collectionName = MongoAnnotationProcessor.getCollectionName(userClass);
@@ -51,6 +54,30 @@ public class UserRepository extends BaseRepository implements UserDao {
         }
     }
 
+    private Field getFiledInEmail(String fieldName) {
+        try {
+            return emailClass.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException("Field not found: " + fieldName, e);
+        }
+    }
+
+     private Field getFiledInUserPassword(String fieldName) {
+        try {
+            return userPasswordClass.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException("Field not found: " + fieldName, e);
+        }
+    }
+
+    private List<User> getUsers(FindIterable<Document> cursor) {
+        List<User> users = new ArrayList<>();
+        for (Document document : cursor) {
+            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
+        }
+        return users;
+    }
+
     @Override
     public Optional<User> findById(ObjectId id) {
         Document document = userCollection.find(Filters.eq("_id", id)).first();
@@ -59,11 +86,8 @@ public class UserRepository extends BaseRepository implements UserDao {
 
     @Override
     public List<User> findAll() {
-        List<User> users = new ArrayList<>();
-        for (Document document : userCollection.find()) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find();
+        return getUsers(cursor);
     }
 
     @Override
@@ -73,58 +97,66 @@ public class UserRepository extends BaseRepository implements UserDao {
 
         int skip = (page - 1) * pageSize;
 
-        List<User> users = new ArrayList<>();
-        for (Document document : userCollection.find().skip(skip).limit(pageSize)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find().skip(skip).limit(pageSize);
+
+        return getUsers(cursor);
     }
 
     @Override
     public long count() {
-        return userCollection.countDocuments();
+        return userCollection.estimatedDocumentCount();
     }
 
     @Override
     public List<User> findByUsername(String username) {
-        List<User> users = new ArrayList<>();
         Bson filter = Filters.eq(
                 MongoAnnotationProcessor.getFieldName(getField("username")),
                 username
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     @Override
     public List<User> findByEmail(String email) {
-        List<User> users = new ArrayList<>();
         Bson filter = Filters.eq(
-                "email.email",
+                MongoAnnotationProcessor.getFieldName(getField("email"))
+                        + "."
+                        + MongoAnnotationProcessor.getFieldName(getFiledInEmail("email")),
                 email
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
+    }
+
+    @Override
+    public List<User> findByEmailNotConfirmed() {
+        Bson filter = Filters.eq(
+                MongoAnnotationProcessor.getFieldName(getField("email"))
+                        + "."
+                        + MongoAnnotationProcessor.getFieldName(getFiledInEmail("confirmed")),
+                false
+        );
+
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     @Override
     public List<User> findActiveUsers() {
-        List<User> users = new ArrayList<>();
         Bson filter = Filters.eq(
                 MongoAnnotationProcessor.getFieldName(getField("active")),
                 true
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     @Override
@@ -158,44 +190,38 @@ public class UserRepository extends BaseRepository implements UserDao {
 
     // Additional methods for timestamp-based queries
     public List<User> findUsersCreatedAfter(Date dateTime) {
-        List<User> users = new ArrayList<>();
         Bson filter = Filters.gt(
-                "created_at",
+                MONGO_FIELD_NAME_CREATED_AT,
                 MongoAnnotationProcessor.formatAsUTC(dateTime)
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     public List<User> findUsersUpdatedBefore(Date dateTime) {
         List<User> users = new ArrayList<>();
         Bson filter = Filters.lt(
-                "updated_at",
+                MONGO_FIELD_NAME_UPDATED_AT,
                 MongoAnnotationProcessor.formatAsUTC(dateTime)
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     public List<User> findRecentlyActiveUsers(int days) {
-        // LocalDateTime cutoff = MongoAnnotationProcessor.getCurrentUTCDateTime().minusDays(days);
         Date cutoff = MongoAnnotationProcessor.nowMinusDays(days);
-        List<User> users = new ArrayList<>();
         Bson filter = Filters.gte(
-                "last_login_at",
+                MongoAnnotationProcessor.getFieldName(getField("lastLoginAt")),
                 MongoAnnotationProcessor.formatAsUTC(cutoff)
         );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     @Override
@@ -226,7 +252,7 @@ public class UserRepository extends BaseRepository implements UserDao {
                     Filters.eq("_id", objectId),
                     Updates.combine(
                             Updates.set("password_info", passwordDoc),
-                            Updates.set("updated_at", MongoAnnotationProcessor.getCurrentUTCDateTime().toString())
+                            Updates.set("updated_at", MongoAnnotationProcessor.getCurrentUTCDateTime())
                     )
             );
 
@@ -236,7 +262,7 @@ public class UserRepository extends BaseRepository implements UserDao {
         }
     }
 
-    public boolean addLoginHistory(String userId, LoginHistoryView loginHistoryView) {
+    public boolean addLoginHistory(String userId, LoginHistoryView loginHistoryView, Boolean failedPassword) {
         try {
             ObjectId objectId = new ObjectId(userId);
 
@@ -244,13 +270,19 @@ public class UserRepository extends BaseRepository implements UserDao {
 
             Document historyDoc = MongoAnnotationProcessor.toDocument(loginHistory);
 
+            List<Bson> updates = new ArrayList<>();
+            updates.add(Updates.push(MongoAnnotationProcessor.getFieldName(getField("loginHistory")), historyDoc));
+            updates.add(Updates.set(MongoAnnotationProcessor.getFieldName(getField("lastLoginAt")), loginHistory.getLoginTime()));
+            updates.add(Updates.set(MONGO_FIELD_NAME_UPDATED_AT, MongoAnnotationProcessor.getCurrentUTCDateTime()));
+
+            if(Objects.equals(failedPassword, true)) {
+                updates.add(Updates.inc("password.failed_attempts",  1));
+                updates.add(Updates.set("password.last_failed_attempt", loginHistory.getLoginTime()));
+            }
+
             UpdateResult result = userCollection.updateOne(
                     Filters.eq("_id", objectId),
-                    Updates.combine(
-                            Updates.push("login_history", historyDoc),
-                            Updates.set("last_login_at", loginHistory.getLoginTime().toString()),
-                            Updates.set("updated_at", MongoAnnotationProcessor.getCurrentUTCDateTime().toString())
-                    )
+                    Updates.combine(updates)
             );
 
             return result.getModifiedCount() > 0;
@@ -267,7 +299,7 @@ public class UserRepository extends BaseRepository implements UserDao {
             // If adding a primary address, remove primary from others
             List<Bson> updates = new ArrayList<>();
             updates.add(Updates.push("addresses", addressDoc));
-            updates.add(Updates.set("updated_at", MongoAnnotationProcessor.getCurrentUTCDateTime().toString()));
+            updates.add(Updates.set(MONGO_FIELD_NAME_UPDATED_AT, MongoAnnotationProcessor.getCurrentUTCDateTime()));
 
             if (address.isPrimary()) {
                 updates.add(Updates.set("addresses.$[].is_primary", false));
@@ -287,23 +319,29 @@ public class UserRepository extends BaseRepository implements UserDao {
     public List<User> findUsersWithExpiredPasswords() {
         String currentTime = MongoAnnotationProcessor.formatAsUTC(MongoAnnotationProcessor.getCurrentUTCDateTime());
 
-        Bson filter = Filters.lt("password.expires_at", currentTime);
-        List<User> users = new ArrayList<>();
+        Bson filter = Filters.lt(
+                MongoAnnotationProcessor.getFieldName(getField("password"))
+                        + "."
+                        + MongoAnnotationProcessor.getFieldName(getFiledInUserPassword("expiresAt")),
+                currentTime
+        );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
     public List<User> findUsersWithFailedLoginAttempts(int minAttempts) {
-        Bson filter = Filters.gte("password.failed_attempts", minAttempts);
-        List<User> users = new ArrayList<>();
+        Bson filter = Filters.gte(
+                MongoAnnotationProcessor.getFieldName(getField("password"))
+                        + "."
+                        + MongoAnnotationProcessor.getFieldName(getFiledInUserPassword("failedAttempts")),
+                minAttempts
+        );
 
-        for (Document document : userCollection.find(filter)) {
-            users.add(MongoAnnotationProcessor.fromDocument(document, userClass));
-        }
-        return users;
+        FindIterable<Document> cursor = userCollection.find(filter);
+
+        return getUsers(cursor);
     }
 
 }

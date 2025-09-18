@@ -15,6 +15,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.use
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.ApiResponseController;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.controller.BaseController;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.ListIdsView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.PaginationView;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -47,6 +48,26 @@ public class TestController extends BaseController {
     }
 
     @GET
+    @Path("ids")
+    @Operation(summary = "Get list of id of a Test instance", description = "Return a list of id of Test instance")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = String.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllIdTests() throws Exception {
+
+        List<String> testIds = TestService.getInstance().listIds();
+
+        return ApiResponseController.ok(testIds);
+    }
+
+    @GET
     @Path("list")
     @Operation(summary = "Get list of a Test instance", description = "Return a list of Test instance")
     @ApiResponses(value = {
@@ -75,6 +96,37 @@ public class TestController extends BaseController {
         ListTestView listTestView = new ListTestView(testViews, paginationView);
 
         return ApiResponseController.ok(listTestView);
+    }
+
+    @GET
+    @Path("ids/list")
+    @Operation(summary = "Get list of id of a Test instance", description = "Return a list of id of Test instance")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Successful operation",
+                    // content = @Content(array = @ArraySchema(schema = @Schema(implementation = TestView.class)))
+                    content = @Content(schema = @Schema(implementation = ListIdsView.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllIdsTestsPaginated(
+            @Parameter(description = "Page number (1-based), starting from 1", example = "1", required = true)
+            @QueryParam("page") @DefaultValue("1") Integer page,
+            @Parameter(description = "Page size (1-based), starting from 1", example = "10", required = false)
+            @QueryParam("pageSize") @DefaultValue("1") Integer pageSize
+    ) throws Exception {
+
+        List<String> testIdsViews = TestService.getInstance().listIds(page, pageSize != null ? pageSize : 10);
+        Long count = TestService.getInstance().count();
+
+        PaginationView paginationView = new PaginationView(page, pageSize, count);
+
+        ListIdsView listIdsTestView = new ListIdsView(testIdsViews, paginationView);
+
+        return ApiResponseController.ok(listIdsTestView);
     }
 
     @GET

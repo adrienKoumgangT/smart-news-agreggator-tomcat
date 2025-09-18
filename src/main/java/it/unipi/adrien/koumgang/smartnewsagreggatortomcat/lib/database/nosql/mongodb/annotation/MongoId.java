@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 public @interface MongoId {
 
     String value() default "_id";
+    boolean generateOnCreate() default false;
 
 }

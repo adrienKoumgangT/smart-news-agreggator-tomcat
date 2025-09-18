@@ -87,7 +87,7 @@ public class UserStatusController extends BaseController {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserStatus(
-            @Parameter(name = "idUserStatus", description = "User id", example = "68b28e50c8c86a733de632d8")
+            @Parameter(name = "idUserStatus", description = "User Status id", example = "68b28e50c8c86a733de632d8")
             @PathParam("idUserStatus") String idUserStatus,
             @HeaderParam("Authorization") String token
     ) throws Exception {

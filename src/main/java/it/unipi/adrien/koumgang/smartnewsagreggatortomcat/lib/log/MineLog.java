@@ -222,6 +222,10 @@ public final class MineLog {
         formatPrint(ColorPrint.MAGENTA_BOLD.getCode(), message);
     }
 
+    public static void missing(String message) {
+        formatPrint(ColorPrint.CYAN_BOLD.getCode(), message);
+    }
+
     public static void error(String message) {
         formatPrint(ColorPrint.RED_BOLD.getCode(), message);
     }

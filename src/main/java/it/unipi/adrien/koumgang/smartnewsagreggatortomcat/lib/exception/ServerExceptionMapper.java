@@ -121,6 +121,7 @@ public class ServerExceptionMapper implements ExceptionMapper<Throwable> {
                                     "exception",
                                     throwable.getClass().getSimpleName(),
                                     errorMessage,
+                                    null,
                                     curlCommand,
                                     requestDataView,
                                     idUser

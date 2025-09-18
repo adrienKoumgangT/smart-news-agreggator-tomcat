@@ -31,6 +31,9 @@ public class ServerEventLog extends BaseModel {
     @ModelField("message")
     private String message;
 
+    @ModelField("file")
+    private String file;
+
     public ServerEventLog() {}
 
     public ServerEventLog(String event, String name, String message) {
@@ -85,5 +88,13 @@ public class ServerEventLog extends BaseModel {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
     }
 }

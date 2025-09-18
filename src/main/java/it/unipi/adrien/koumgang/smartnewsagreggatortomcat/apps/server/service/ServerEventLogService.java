@@ -62,6 +62,7 @@ public class ServerEventLogService {
             String event,
             String name,
             String message,
+            String file,
             String curl,
             RequestDataView requestDataView,
             String metaUser

@@ -25,8 +25,7 @@ public class UserExternView extends BaseView {
     public UserExternView() {}
 
     public UserExternView(User user) {
-        this.idUser = user.getUserId() != null ? new StringIdConverter().fromObjectId(user.getUserId()) : null;
-
+        this.idUser = StringIdConverter.getInstance().fromObjectId(user.getUserId());
         this.firstName  = user.getFirstName();
         this.lastName   = user.getLastName();
         this.username   = user.getUsername();

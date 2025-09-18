@@ -50,6 +50,9 @@ public class User extends BaseModel {
     @ModelField("wall_image")
     private String wallImage;
 
+    @ModelField("tags")
+    private List<String> tags;
+
     @ModelField("last_login")
     @MongoDateTime(utc = true)
     private Date lastLoginAt;
@@ -186,6 +189,14 @@ public class User extends BaseModel {
 
     public void setWallImage(String wallImage) {
         this.wallImage = wallImage;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 
     public Date getLastLoginAt() {

@@ -25,6 +25,7 @@ public class EmailErrorLogger {
                         error.getMessage(),
                         null,
                         null,
+                        null,
                         null
                 );
 

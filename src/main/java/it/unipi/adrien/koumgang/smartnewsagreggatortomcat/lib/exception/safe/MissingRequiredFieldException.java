@@ -2,13 +2,13 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.SafeException;
 
-public class MissingRequiredFiledException  extends SafeException {
+public class MissingRequiredFieldException extends SafeException {
 
-    public MissingRequiredFiledException() {
+    public MissingRequiredFieldException() {
         super();
     }
 
-    public MissingRequiredFiledException(String errorMessage) {
+    public MissingRequiredFieldException(String errorMessage) {
         super(errorMessage);
     }
 

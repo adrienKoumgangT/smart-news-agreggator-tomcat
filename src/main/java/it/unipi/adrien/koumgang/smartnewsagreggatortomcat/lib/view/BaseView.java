@@ -1,18 +1,18 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view;
 
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe.MissingRequiredFiledException;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.exception.safe.MissingRequiredFieldException;
 
 import java.util.List;
 
-public class BaseView {
+public abstract class BaseView {
 
     public BaseView() {}
 
-    public void checkIfValid() throws MissingRequiredFiledException {
+    public void checkIfValid() throws MissingRequiredFieldException {
         List<String> missing = RequiredValidator.validateRequiredFields(this);
 
         if (!missing.isEmpty()) {
-            throw new MissingRequiredFiledException("Missing required fields: " + missing);
+            throw new MissingRequiredFieldException("Missing required fields: " + missing);
         }
     }
 

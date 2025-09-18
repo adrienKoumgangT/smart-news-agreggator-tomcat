@@ -6,8 +6,8 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.dao.TestDao;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.model.Test;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.repository.TestRepository;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view.TestView;
-import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.cache.CacheManager;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.redis.RedisInstance;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.log.MineLog;
 import org.bson.types.ObjectId;
 
@@ -42,10 +42,10 @@ public class TestService {
         String testKey = formTestKey(id);
 
         try {
-            Object cacheData = CacheManager.getInstance().getHandler().get(testKey);
-            if(cacheData instanceof Test) {
-
-                return new TestView((Test) cacheData);
+            TestView cacheData = RedisInstance.getInstance().get(testKey, TestView.class);
+            if(cacheData != null) {
+                timePrinter.log();
+                return cacheData;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +57,7 @@ public class TestService {
 
             if(optTest.isPresent()) {
                 try {
-                    CacheManager.getInstance().getHandler().set(testKey, optTest.get(), 60*10);
+                    RedisInstance.getInstance().set(testKey, optTest.get(), 60*10);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -150,7 +150,7 @@ public class TestService {
 
             try {
                 String testKey = formTestKey(id);
-                CacheManager.getInstance().getHandler().delete(testKey);
+                RedisInstance.getInstance().delete(testKey);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -177,6 +177,16 @@ public class TestService {
         return testViews;
     }
 
+    public List<String> listIds() {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [LIST] [IDS] ");
+
+        List<String> ids = testDao.findAllIds();
+
+        timePrinter.log();
+
+        return ids;
+    }
+
     public List<TestView> listTests(int page, int pageSize) {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [LIST] page: " + page + ", size: " + pageSize);
 
@@ -187,6 +197,16 @@ public class TestService {
         timePrinter.log();
 
         return testViews;
+    }
+
+    public List<String> listIds(int page, int pageSize) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [TEST] [LIST] [IDS] page: " + page + ", size: " + pageSize);
+
+        List<String> ids = testDao.findAllIds(page, pageSize);
+
+        timePrinter.log();
+
+        return ids;
     }
 
     public long count() {

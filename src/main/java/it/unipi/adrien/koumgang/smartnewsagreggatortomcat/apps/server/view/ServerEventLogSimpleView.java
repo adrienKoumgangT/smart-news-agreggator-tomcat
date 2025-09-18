@@ -22,6 +22,8 @@ public class ServerEventLogSimpleView extends BaseView {
 
     private String message;
 
+    private String file;
+
     private Date createdAt;
 
     public ServerEventLogSimpleView() {}
@@ -29,10 +31,11 @@ public class ServerEventLogSimpleView extends BaseView {
     public ServerEventLogSimpleView(ServerEventLog serverEventLog) {
         this.idServerEventLog = StringIdConverter.getInstance().fromObjectId(serverEventLog.getServerEventLogId());
 
-        this.event = serverEventLog.getEvent();
-        this.curl = serverEventLog.getCurl();
-        this.name = serverEventLog.getName();
-        this.message = serverEventLog.getMessage();
+        this.event      = serverEventLog.getEvent();
+        this.curl       = serverEventLog.getCurl();
+        this.name       = serverEventLog.getName();
+        this.message    = serverEventLog.getMessage();
+        this.file       = serverEventLog.getFile();
 
         this.createdAt  = serverEventLog.getCreatedAt();
     }
@@ -55,6 +58,10 @@ public class ServerEventLogSimpleView extends BaseView {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getFile() {
+        return file;
     }
 
     public Date getCreatedAt() {

@@ -38,6 +38,12 @@ public class AuthUtils {
         return ip;
     }
 
+    public static String getUserAgentFromRequestHeader(HttpHeaders headers) {
+        if(headers == null) return null;
+
+        return headers.getHeaderString("User-Agent");
+    }
+
 
     public static String getDataServerString(HttpHeaders headers) {
         if(headers == null) return null;

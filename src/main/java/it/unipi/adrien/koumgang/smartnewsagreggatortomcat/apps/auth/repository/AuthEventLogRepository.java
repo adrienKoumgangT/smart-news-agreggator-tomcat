@@ -137,7 +137,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
     public List<AuthEventLog> findAllByEvent(String event) {
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterByEvent(event))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))));
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
         List<AuthEventLog> authEventLogs = new ArrayList<>();
         for (Document document : cursor) {
@@ -161,7 +161,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
 
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterByEvent(event))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
                 .skip(skip)
                 .limit(pageSize);
 
@@ -189,7 +189,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
     public List<AuthEventLog> findAllBySuccess(Boolean success) {
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterBySuccess(success))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))));
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
         List<AuthEventLog> authEventLogs = new ArrayList<>();
         for (Document document : cursor) {
@@ -213,7 +213,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
 
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterBySuccess(success))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
                 .skip(skip)
                 .limit(pageSize);
 
@@ -243,7 +243,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
     public List<AuthEventLog> findAllByEventAndSuccess(String event, Boolean success) {
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterByEventAndSuccess(event, success))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))));
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
         List<AuthEventLog> authEventLogs = new ArrayList<>();
         for (Document document : cursor) {
@@ -268,7 +268,7 @@ public class AuthEventLogRepository extends BaseRepository implements AuthEventL
 
         FindIterable<Document> cursor = authEventLogCollection
                 .find(getFilterByEventAndSuccess(event, success))
-                .sort(Sorts.descending(MongoAnnotationProcessor.getFieldName(getField(FIELD_NAME_CREATED_AT))))
+                .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
                 .skip(skip)
                 .limit(pageSize);
 

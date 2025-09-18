@@ -1,10 +1,11 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.view;
 
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.PaginationView;
 
 import java.util.List;
 
-public class ListTestView {
+public class ListTestView extends BaseView {
 
     private List<TestView> tests;
 

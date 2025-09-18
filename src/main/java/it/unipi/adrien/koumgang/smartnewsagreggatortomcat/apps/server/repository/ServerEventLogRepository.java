@@ -65,6 +65,15 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
         );
     }
 
+
+    private List<ServerEventLog> getServerEventLogs(FindIterable<Document> cursor) {
+        List<ServerEventLog> serverEventLogs = new ArrayList<>();
+        for (Document document : cursor) {
+            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
+        }
+        return serverEventLogs;
+    }
+
     /**
      * @param id the id server event log to return
      * @return server event log instance if found
@@ -80,7 +89,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
      */
     @Override
     public long count() {
-        return serverEventLogCollection.countDocuments();
+        return serverEventLogCollection.estimatedDocumentCount();
     }
 
     /**
@@ -92,11 +101,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
                 .find()
                 .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -118,11 +123,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
                 .find(getFilterByEvent(event))
                 .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -138,18 +139,13 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
 
         int skip = (page - 1) * pageSize;
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-
         FindIterable<Document> cursor = serverEventLogCollection
                 .find(getFilterByEvent(event))
                 .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT))
                 .skip(skip)
                 .limit(pageSize);
 
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -167,20 +163,11 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
      */
     @Override
     public List<ServerEventLog> findByName(String name) {
-        Bson filter = Filters.eq(
-                MongoAnnotationProcessor.getFieldName(getField("name")),
-                name
-        );
-
         FindIterable<Document> cursor = serverEventLogCollection
                 .find(getFilterByName(name))
                 .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -202,11 +189,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
                 .skip(skip)
                 .limit(pageSize);
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -230,11 +213,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
                 .find(getFilterByEventAndName(event, name))
                 .sort(Sorts.descending(MONGO_FIELD_NAME_CREATED_AT));
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**
@@ -257,11 +236,7 @@ public class ServerEventLogRepository extends BaseRepository implements ServerEv
                 .skip(skip)
                 .limit(pageSize);
 
-        List<ServerEventLog> serverEventLogs = new ArrayList<>();
-        for (Document document : cursor) {
-            serverEventLogs.add(MongoAnnotationProcessor.fromDocument(document, serverEventLogClass));
-        }
-        return serverEventLogs;
+        return getServerEventLogs(cursor);
     }
 
     /**

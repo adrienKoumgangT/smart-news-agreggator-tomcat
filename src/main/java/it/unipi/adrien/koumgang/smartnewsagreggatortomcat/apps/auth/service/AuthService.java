@@ -11,6 +11,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.pas
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.token.TokenManager;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.user.UserToken;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.utils.AuthUtils;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.log.MineLog;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.shared.view.RequestDataView;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -152,6 +153,7 @@ public class AuthService {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [AUTH] [LOGIN] username: " + username);
 
         String ip = headers == null ? null : AuthUtils.getIpFromRequestHeader(headers);
+        String userAgent = headers == null ? null : AuthUtils.getUserAgentFromRequestHeader(headers);
         Map<String, List<String>> dataServer = headers == null ? new HashMap<>() : AuthUtils.getDataServer(headers);
 
         RequestDataView requestDataView;
@@ -195,6 +197,12 @@ public class AuthService {
                     null
             );
 
+            userService.recordFailedLogin(
+                    StringIdConverter.getInstance().fromObjectId(user.getUserId()),
+                    ip, userAgent,
+                    false
+            );
+
             timePrinter.missing("User can't login");
 
             return null;
@@ -214,7 +222,13 @@ public class AuthService {
                     null
             );
 
-            timePrinter.missing("User not found");
+            userService.recordFailedLogin(
+                    StringIdConverter.getInstance().fromObjectId(user.getUserId()),
+                    ip, userAgent,
+                    true
+            );
+
+            timePrinter.missing("Invalid password");
 
             return null;
         }
@@ -233,6 +247,12 @@ public class AuthService {
                 null
         );
 
+        userService.recordSuccessLogin(
+                StringIdConverter.getInstance().fromObjectId(user.getUserId()),
+                ip, userAgent,
+                false
+        );
+
         timePrinter.log();
 
         return token;
@@ -245,6 +265,7 @@ public class AuthService {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [AUTH] [LOGIN] username: " + username);
 
         String ip = headers == null ? null : AuthUtils.getIpFromRequestHeader(headers);
+        String userAgent = headers == null ? null : AuthUtils.getUserAgentFromRequestHeader(headers);
         Map<String, List<String>> dataServer = headers == null ? new HashMap<>() : AuthUtils.getDataServer(headers);
 
         RequestDataView requestDataView;
@@ -288,6 +309,12 @@ public class AuthService {
                 ip,
                 dataServer,
                 null
+        );
+
+        userService.recordSuccessLogin(
+                StringIdConverter.getInstance().fromObjectId(user.getUserId()),
+                ip, userAgent,
+                false
         );
 
         timePrinter.log();

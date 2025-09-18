@@ -294,12 +294,22 @@ public class UserService {
         return false;
     }
 
-    public boolean recordLogin(UserToken userToken, String userId, String ipAddress, String userAgent) {
-        return recordLogin(userToken, userId, "success", ipAddress, userAgent);
+    public boolean recordFailedLogin(String userId, String ipAddress, String userAgent, Boolean failedPassword) {
+        return recordLogin(userId, "failed", ipAddress, userAgent, failedPassword);
     }
 
-    public boolean recordLogin(UserToken userToken, String userId, String status, String ipAddress, String userAgent) {
-        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter("[SERVICE] [USER] [RECORD LOGIN] id: " + userId + ", status:" + status);
+    public boolean recordSuccessLogin(String userId, String ipAddress, String userAgent, Boolean failedPassword) {
+        return recordLogin(userId, "success", ipAddress, userAgent, failedPassword);
+    }
+
+    private boolean recordLogin(String userId, String status, String ipAddress, String userAgent, Boolean failedPassword) {
+        MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
+                "[SERVICE] [USER] [RECORD LOGIN] id: " + userId
+                        + ", status:" + status
+                        + ",  ipAddress:" + ipAddress
+                        + ",  userAgent:" + userAgent
+                        + ", failedPassword:" + failedPassword
+        );
 
         try {
             ObjectId objectId = new ObjectId(userId);
@@ -310,7 +320,7 @@ public class UserService {
                     userAgent
             );
 
-            boolean updated =  ((UserRepository) userDao).addLoginHistory(userId, loginHistoryView);
+            boolean updated =  userDao.addLoginHistory(userId, loginHistoryView, failedPassword);
 
             if(updated) {
                 timePrinter.log();
@@ -326,11 +336,11 @@ public class UserService {
     }
 
     public List<User> getUsersWithExpiredPasswords(UserToken userToken) {
-        return ((UserRepository) userDao).findUsersWithExpiredPasswords();
+        return userDao.findUsersWithExpiredPasswords();
     }
 
     public List<User> getUsersWithSuspiciousActivity(UserToken userToken) {
-        return ((UserRepository) userDao).findUsersWithFailedLoginAttempts(3);
+        return userDao.findUsersWithFailedLoginAttempts(3);
     }
 
 

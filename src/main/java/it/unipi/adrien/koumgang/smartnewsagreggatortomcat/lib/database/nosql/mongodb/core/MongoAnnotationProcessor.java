@@ -80,6 +80,13 @@ public class MongoAnnotationProcessor {
                 }
 
                 // Handle ID generation
+                if (metadata.field.isAnnotationPresent(MongoId.class) && value == null) {
+                    MongoId annotation = metadata.field.getAnnotation(MongoId.class);
+                    if (annotation.generateOnCreate()) {
+                        value = generateObjectId().toHexString();
+                    }
+                }
+
                 if (metadata.field.isAnnotationPresent(MongoIdString.class) && value == null) {
                     MongoIdString annotation = metadata.field.getAnnotation(MongoIdString.class);
                     if (annotation.generateOnCreate()) {
@@ -151,13 +158,21 @@ public class MongoAnnotationProcessor {
             return convertMapForStorage((Map<?, ?>) value);
         }
 
-        // Handle Collection types (List, Set, etc.)
+        // Handle Collection types (List, Set, etc.) - ADD PRIMITIVE TYPE CHECK
         if (value instanceof Collection) {
+            // Check if this is a collection of primitive types
+            if (isPrimitiveCollection(metadata)) {
+                return value; // Return as-is for primitive collections
+            }
             return convertCollectionForStorage((Collection<?>) value, metadata);
         }
 
-        // Handle array types
+        // Handle array types - ADD PRIMITIVE TYPE CHECK
         if (value != null && value.getClass().isArray()) {
+            // Check if this is an array of primitive types
+            if (isPrimitiveArray(value.getClass().getComponentType())) {
+                return value; // Return as-is for primitive arrays
+            }
             return convertArrayForStorage(value, metadata);
         }
 
@@ -208,13 +223,21 @@ public class MongoAnnotationProcessor {
             return convertMapFromStorage((Document) value, metadata);
         }
 
-        // Handle Collection types from List
+        // Handle Collection types from List - ADD PRIMITIVE TYPE CHECK
         if (Collection.class.isAssignableFrom(metadata.fieldType) && value instanceof List) {
+            // Check if this is a collection of primitive types
+            if (isPrimitiveCollection(metadata)) {
+                return convertPrimitiveCollectionFromStorage((List<?>) value, metadata);
+            }
             return convertCollectionFromStorage((List<?>) value, metadata);
         }
 
-        // Handle array types from List
+        // Handle array types from List - ADD PRIMITIVE TYPE CHECK
         if (metadata.fieldType.isArray() && value instanceof List) {
+            // Check if this is an array of primitive types
+            if (isPrimitiveArray(metadata.fieldType.getComponentType())) {
+                return convertPrimitiveArrayFromStorage((List<?>) value, metadata.fieldType);
+            }
             return convertArrayFromStorage((List<?>) value, metadata);
         }
 
@@ -238,7 +261,6 @@ public class MongoAnnotationProcessor {
 
         // Handle ID conversion from ObjectId to String
         if (metadata.field.isAnnotationPresent(MongoId.class) && value instanceof ObjectId) {
-            // return ((ObjectId) value).toHexString();
             return value;
         }
 
@@ -251,6 +273,122 @@ public class MongoAnnotationProcessor {
         if (("id".equals(metadata.fieldName) || "id".equals(metadata.field.getName()))
                 && value instanceof ObjectId && metadata.fieldType == String.class) {
             return ((ObjectId) value).toHexString();
+        }
+
+        return value;
+    }
+
+    private static boolean isPrimitiveCollection(FieldMetadata metadata) {
+        if (metadata.genericType == null) {
+            return false;
+        }
+        return isPrimitiveType(metadata.genericType);
+    }
+
+    private static boolean isPrimitiveArray(Class<?> componentType) {
+        return isPrimitiveType(componentType);
+    }
+
+    private static boolean isPrimitiveType(Class<?> type) {
+        return type.isPrimitive() ||
+                type == String.class ||
+                type == Integer.class ||
+                type == Long.class ||
+                type == Double.class ||
+                type == Float.class ||
+                type == Boolean.class ||
+                type == Character.class ||
+                type == Byte.class ||
+                type == Short.class;
+    }
+
+    private static Object convertPrimitiveCollectionFromStorage(List<?> list, FieldMetadata metadata) {
+        try {
+            Collection<Object> collection;
+            if (metadata.fieldType.isInterface()) {
+                collection = new ArrayList<>();
+            } else {
+                collection = (Collection<Object>) metadata.fieldType.getDeclaredConstructor().newInstance();
+            }
+
+            for (Object item : list) {
+                Object convertedItem = convertPrimitiveValue(item, metadata.genericType);
+                collection.add(convertedItem);
+            }
+            return collection;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create primitive collection instance", e);
+        }
+    }
+
+    private static Object convertPrimitiveArrayFromStorage(List<?> list, Class<?> arrayType) {
+        Class<?> componentType = arrayType.getComponentType();
+        Object array = java.lang.reflect.Array.newInstance(componentType, list.size());
+
+        for (int i = 0; i < list.size(); i++) {
+            Object item = list.get(i);
+            Object convertedItem = convertPrimitiveValue(item, componentType);
+            java.lang.reflect.Array.set(array, i, convertedItem);
+        }
+        return array;
+    }
+
+    private static Object convertPrimitiveValue(Object value, Class<?> targetType) {
+        if (value == null) {
+            return null;
+        }
+
+        if (targetType.isInstance(value)) {
+            return value;
+        }
+
+        // Handle type conversions for common primitive wrapper types
+        if (targetType == String.class) {
+            return value.toString();
+        }
+
+        if (targetType == Integer.class && value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+
+        if (targetType == Long.class && value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+
+        if (targetType == Double.class && value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+
+        if (targetType == Float.class && value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+
+        if (targetType == Boolean.class) {
+            if (value instanceof Boolean) {
+                return value;
+            } else if (value instanceof String) {
+                return Boolean.parseBoolean((String) value);
+            } else if (value instanceof Number) {
+                return ((Number) value).intValue() != 0;
+            }
+        }
+
+        // For other types, try string conversion
+        try {
+            if (targetType == Character.class && value instanceof String) {
+                String str = (String) value;
+                return str.isEmpty() ? null : str.charAt(0);
+            }
+
+            if (targetType == Byte.class && value instanceof Number) {
+                return ((Number) value).byteValue();
+            }
+
+            if (targetType == Short.class && value instanceof Number) {
+                return ((Number) value).shortValue();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert primitive value: " + value + " to type: " + targetType, e);
         }
 
         return value;
@@ -425,6 +563,11 @@ public class MongoAnnotationProcessor {
             return convertNestedList((List<?>) item, metadata);
         } else if (metadata != null && metadata.fieldType.isEnum() && item instanceof String) {
             return convertEnumFromStorage((String) item, metadata.fieldType);
+        }
+
+        // Handle primitive value conversion if metadata is available
+        if (metadata != null && isPrimitiveType(metadata.fieldType)) {
+            return convertPrimitiveValue(item, metadata.fieldType);
         }
 
         return item;

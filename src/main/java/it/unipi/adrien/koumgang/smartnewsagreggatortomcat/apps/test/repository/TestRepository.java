@@ -1,5 +1,6 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.test.repository;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -12,6 +13,7 @@ import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.utils.DateTime
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.MongoInstance;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.annotation.MongoRepository;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.core.MongoAnnotationProcessor;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.repository.BaseRepository;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -61,6 +63,19 @@ public class TestRepository extends BaseRepository implements TestDao {
         return tests;
     }
 
+    /**
+     * @return list of all test IDs
+     */
+    @Override
+    public List<String> findAllIds() {
+        List<String> ids = new ArrayList<>();
+        // Only project the _id field
+        for (Document document : testCollection.find().projection(new Document("_id", 1))) {
+            ids.add(StringIdConverter.getInstance().fromObjectId((ObjectId) document.get("_id")));
+        }
+        return ids;
+    }
+
     @Override
     public List<Test> findAll(int page, int pageSize) {
         if (page < 1) page = 1;
@@ -73,6 +88,26 @@ public class TestRepository extends BaseRepository implements TestDao {
             tests.add(MongoAnnotationProcessor.fromDocument(document, testClass));
         }
         return tests;
+    }
+
+    @Override
+    public List<String> findAllIds(int page, int pageSize) {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        int skip = (page - 1) * pageSize;
+
+        List<String> ids = new ArrayList<>();
+        FindIterable<Document> cursor = testCollection.find()
+                .projection(new Document("_id", 1))
+                .skip(skip)
+                .limit(pageSize);
+
+        for (Document document : cursor) {
+            ids.add(StringIdConverter.getInstance().fromObjectId((ObjectId) document.get("_id")));
+        }
+
+        return ids;
     }
 
     @Override

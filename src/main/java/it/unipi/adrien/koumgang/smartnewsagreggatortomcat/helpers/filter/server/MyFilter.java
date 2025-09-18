@@ -1,6 +1,7 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.helpers.filter.server;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.MongoInstance;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.redis.RedisInstance;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.log.MineLog;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -12,7 +13,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -32,8 +32,22 @@ public class MyFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         System.out.println("Init Server");
+        MineLog.TimePrinter timePrinterInit = new MineLog.TimePrinter("[MY FILTER] [INIT] ");
+
         // Ensure Mongo is initialized early
+        MineLog.TimePrinter timePrinterMongo = new MineLog.TimePrinter("[MY FILTER] [INIT] [MONGO]");
         MongoInstance.getInstance();
+        timePrinterMongo.log();
+
+        MineLog.TimePrinter timePrinterRedis = new MineLog.TimePrinter("[MY FILTER] [INIT] [REDIS] ");
+        try {
+            RedisInstance.getInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        timePrinterRedis.log();
+
+        timePrinterInit.log();
     }
 
     @Override
@@ -49,6 +63,11 @@ public class MyFilter implements Filter {
     public void destroy() {
         try {
             MongoInstance.getInstance().close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            RedisInstance.getInstance().close();
         } catch (Exception e) {
             e.printStackTrace();
         }

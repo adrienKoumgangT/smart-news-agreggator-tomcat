@@ -3,6 +3,7 @@ package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.authentication.us
 import com.google.gson.GsonBuilder;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.user.model.User;
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.utils.ToString;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -101,14 +102,15 @@ public class UserToken {
             return new GsonBuilder().serializeNulls().create().toJson(this);
         } catch (Exception e) {
             // e.printStackTrace();
-            return "{"
-                    + "\"idUser\":" + "\"" + this.idUser + "\""
-                    + "\"username\":" + "\"" + this.username + "\""
-                    + "\"firstname\":" + "\"" + this.firstname + "\""
-                    + "\"lastname\":" + "\"" + this.lastname + "\""
-                    + "\"isAdmin\":" + "\"" + this.isAdmin + "\""
-                    + "\"status\":" + "\"" + this.status + "\""
-                    + "}";
+
+            return ToString.builder("User")
+                    .add("idUser", idUser)
+                    .add("username", username)
+                    .add("firstname", firstname)
+                    .add("lastname", lastname)
+                    .add("isAdmin", isAdmin)
+                    .add("status", status)
+                    .build();
         }
     }
 
