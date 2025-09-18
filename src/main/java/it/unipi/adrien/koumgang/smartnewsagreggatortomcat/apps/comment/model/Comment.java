@@ -1,6 +1,7 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.comment.model;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.reaction.model.ReactionCounts;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.database.nosql.mongodb.utils.StringIdConverter;
 
 import java.util.Date;
 import java.util.List;
@@ -23,6 +24,8 @@ public class Comment {
     public Comment() {}
 
     public Comment(EmbeddedComment comment) {
+        this.idComment = StringIdConverter.getInstance().fromObjectId(comment.getCommentId());
+
         this.title      = comment.getTitle();
         this.content    = comment.getContent();
         this.authorId   = comment.getAuthorId();
@@ -35,6 +38,8 @@ public class Comment {
     }
 
     public Comment(DeepComment comment) {
+        this.idComment = StringIdConverter.getInstance().fromObjectId(comment.getDeepCommentId());
+
         this.title      = comment.getTitle();
         this.content    = comment.getContent();
         this.authorId   = comment.getAuthorId();
