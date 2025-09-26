@@ -1,8 +1,9 @@
 package it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.reaction.view;
 
 import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.apps.reaction.model.ReactionCounts;
+import it.unipi.adrien.koumgang.smartnewsagreggatortomcat.lib.view.BaseView;
 
-public class ReactionCountsView {
+public class ReactionCountsView extends BaseView {
 
     private Integer like;
 

@@ -62,7 +62,7 @@ public class ArticleSourceService extends BaseService {
 
     public ArticleSourceView createArticleSource(UserToken userToken, ArticleSourceView articleSourceDetail) {
         MineLog.TimePrinter timePrinter = new MineLog.TimePrinter(
-                "[SERVICE] [ARTICLE] [SOURCE] [CREATE] user status: " + gson.toJson(articleSourceDetail)
+                "[SERVICE] [ARTICLE] [SOURCE] [CREATE] article source: " + gson.toJson(articleSourceDetail)
         );
 
         MetaDataView metaData = new MetaDataView(articleSourceDetail, METADATA_TYPE);
